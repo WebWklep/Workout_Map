@@ -3,21 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#f7f7f5">
-<title>Workout Map</title>
+<meta name="theme-color" content="#eeede8">
+<title>UNFOG</title>
 
 <style>
 * {
   box-sizing: border-box;
 }
 
+:root {
+  --paper: #eeede8;
+  --ink: #292927;
+  --soft-ink: #77766f;
+  --line: #cecdc6;
+  --cell: #30302e;
+}
+
+html {
+  background: var(--paper);
+}
+
 body {
   margin: 0;
-  background: #f7f7f5;
-  color: #111;
+  background:
+    radial-gradient(ellipse at 18% 12%,
+      rgba(255,255,255,.9), transparent 42%),
+    radial-gradient(ellipse at 85% 65%,
+      rgba(255,255,255,.45), transparent 45%),
+    linear-gradient(145deg, #f1f0eb, #e9e8e2);
+  color: var(--ink);
   font-family: "Courier New", monospace;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  min-height: 100vh;
+}
+
+/* ПЛЁНОЧНОЕ ЗЕРНО */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  opacity: .13;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* МОЛОЧНАЯ ДЫМКА */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 19;
+  opacity: .23;
+  background:
+    radial-gradient(ellipse at 50% 0%,
+      rgba(255,255,255,.7), transparent 55%),
+    radial-gradient(ellipse at 0% 75%,
+      rgba(255,255,255,.45), transparent 45%);
 }
 
 button {
@@ -32,10 +79,22 @@ button {
 #app {
   min-height: 100vh;
   padding: 24px 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .hidden {
   display: none !important;
+}
+
+/* ОБЩАЯ ТИПОГРАФИКА */
+
+.topline,
+.map-header,
+.map-info,
+.footer,
+.exercise {
+  text-shadow: 0 0 .45px rgba(50,50,45,.35);
 }
 
 /* ГЛАВНЫЙ ЭКРАН */
@@ -46,6 +105,8 @@ button {
   align-items: center;
   margin-bottom: 38px;
   font-size: 13px;
+  letter-spacing: 1.5px;
+  color: #45443f;
 }
 
 #exerciseList {
@@ -59,7 +120,7 @@ button {
   align-items: center;
   gap: 12px;
   padding: 17px 0;
-  border-bottom: 1px solid #d8d8d4;
+  border-bottom: 1px solid rgba(100,99,92,.25);
 }
 
 .exercise-name {
@@ -67,16 +128,17 @@ button {
   text-align: left;
   overflow-wrap: anywhere;
   padding: 10px 0;
+  color: #343430;
 }
 
 .exercise-percent {
   font-size: 13px;
-  color: #777;
+  color: #85847c;
 }
 
 .delete {
   font-size: 20px;
-  color: #999;
+  color: #a09f97;
   width: 44px;
   height: 44px;
 }
@@ -89,6 +151,7 @@ button {
   padding: 0;
   font-size: 27px;
   text-align: left;
+  color: #66655f;
   cursor: pointer;
   touch-action: manipulation;
   position: relative;
@@ -109,18 +172,21 @@ button {
   width: 44px;
   height: 44px;
   text-align: left;
+  color: #55544e;
 }
 
 .map-title {
   font-size: 14px;
   overflow-wrap: anywhere;
+  letter-spacing: .5px;
 }
 
 .map-info {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #777;
+  color: #85847c;
+  letter-spacing: .7px;
   margin-bottom: 20px;
 }
 
@@ -139,21 +205,27 @@ button {
   touch-action: manipulation;
 }
 
+/* КЛЕТКИ */
+
 .cell {
   fill: transparent;
 }
 
 .cell.filled {
-  fill: #111;
+  fill: var(--cell);
 }
+
+/* КОНТУР */
 
 .outline {
   fill: none;
-  stroke: #111;
-  stroke-width: 1.15;
+  stroke: #57564f;
+  stroke-width: 1.05;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
+
+/* НИЖНЯЯ ИНФОРМАЦИЯ */
 
 .footer {
   margin-top: 35px;
@@ -161,6 +233,20 @@ button {
   justify-content: flex-end;
   gap: 10px;
   font-size: 12px;
+  color: #77766f;
+  letter-spacing: .7px;
+}
+
+/* ЛЁГКОЕ ПЛЁНОЧНОЕ СМЯГЧЕНИЕ */
+
+.exercise-name,
+.map-title,
+.topline {
+  -webkit-font-smoothing: antialiased;
+}
+
+button:active {
+  opacity: .65;
 }
 </style>
 </head>
@@ -172,7 +258,7 @@ button {
   <section id="home">
 
     <div class="topline">
-      <span>WORKOUT MAP</span>
+      <span>UNFOG</span>
       <span id="exerciseCount">00</span>
     </div>
 
@@ -537,8 +623,6 @@ function addRep(mapIndex, cellIndex) {
 
   if (!cell) return;
 
-  // Если ячейка уже чёрная — отменяем повторение
-
   if (cell[2]) {
 
     cell[2] = false;
@@ -550,13 +634,9 @@ function addRep(mapIndex, cellIndex) {
 
   } else {
 
-    // Если ячейка белая — добавляем повторение
-
     cell[2] = true;
     exercise.reps++;
   }
-
-  // Обновляем выбранную ячейку
 
   const svg = mapsEl.children[mapIndex]?.querySelector("svg");
 
@@ -570,9 +650,6 @@ function addRep(mapIndex, cellIndex) {
       cell[2] ? "cell filled" : "cell"
     );
   }
-
-  // Если последняя карта полностью заполнена,
-  // добавляем следующую снизу
 
   const lastMap = exercise.maps[exercise.maps.length - 1];
 
