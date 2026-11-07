@@ -7,227 +7,258 @@
 <title>UNFOG</title>
 
 <style>
-*{box-sizing:border-box}
-
-:root{
-  --paper:#eeede8;
-  --ink:#302f2c;
-  --soft:#85847d;
-  --line:#cecdc6;
-  --cell:#30302e;
+* {
+  box-sizing: border-box;
 }
 
-html{background:var(--paper)}
+:root {
+  --paper: #eeede8;
+  --ink: #353430;
+  --soft: #85847e;
+  --line: #aaa9a2;
+  --cell: #33322f;
+}
 
-body{
-  margin:0;
-  min-height:100vh;
-  color:var(--ink);
-  font-family:"Courier New",monospace;
+html {
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   background:
-    radial-gradient(ellipse at 15% 10%,#fff 0%,transparent 45%),
-    radial-gradient(ellipse at 85% 65%,rgba(255,255,255,.65),transparent 50%),
-    linear-gradient(145deg,#f1f0eb,#e9e8e2);
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;
+    radial-gradient(ellipse at 25% 15%,
+      rgba(255,255,255,.95), transparent 48%),
+    radial-gradient(ellipse at 85% 75%,
+      rgba(255,255,255,.65), transparent 50%),
+    linear-gradient(135deg,#f2f1ed,#e9e8e2);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 /* ПЛЁНОЧНОЕ ЗЕРНО */
 
-body:before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:20;
-  pointer-events:none;
-  opacity:.15;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: .19;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
 }
 
-/* ОБЩАЯ МОЛОЧНАЯ ДЫМКА */
+/* МОЛОЧНАЯ ДЫМКА */
 
-body:after{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:19;
-  pointer-events:none;
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10px;
+  z-index: 29;
+  pointer-events: none;
+  backdrop-filter: blur(1.1px);
+  -webkit-backdrop-filter: blur(1.1px);
   background:
-    radial-gradient(ellipse at 50% 15%,rgba(255,255,255,.35),transparent 55%),
-    radial-gradient(ellipse at 10% 80%,rgba(255,255,255,.25),transparent 50%);
+    radial-gradient(ellipse at 20% 20%,
+      rgba(255,255,255,.34), transparent 55%),
+    radial-gradient(ellipse at 85% 65%,
+      rgba(255,255,255,.28), transparent 50%),
+    rgba(245,244,239,.12);
 }
 
-button{
-  font:inherit;
-  color:inherit;
-  border:0;
-  background:none;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-#app{
-  min-height:100vh;
-  padding:24px 18px;
+#app {
+  min-height: 100vh;
+  padding: 25px 20px;
+  position: relative;
+  z-index: 1;
 }
 
-.hidden{display:none!important}
-
-/* ГЛАВНАЯ */
-
-.topline{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:38px;
-  font-size:13px;
-  letter-spacing:2px;
-  color:#484741;
-  text-shadow:0 0 1px rgba(50,50,45,.4);
+.hidden {
+  display: none !important;
 }
 
-#exerciseList{
-  display:flex;
-  flex-direction:column;
+/* ТИПОГРАФИКА */
+
+.topline,
+.map-title,
+.map-info,
+.footer,
+.exercise {
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-stretch: condensed;
+  letter-spacing: -.65px;
 }
 
-.exercise{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto 44px;
-  align-items:center;
-  gap:12px;
-  padding:17px 0;
-  border-bottom:1px solid rgba(100,99,92,.25);
+.topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 38px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -.8px;
+  color: #4b4a45;
+  text-shadow: 0 0 2px rgba(50,50,45,.3);
 }
 
-.exercise-name{
-  font-size:15px;
-  text-align:left;
-  overflow-wrap:anywhere;
-  padding:10px 0;
-  color:#343430;
-  text-shadow:0 0 1px rgba(50,50,45,.3);
+#exerciseList {
+  display: flex;
+  flex-direction: column;
 }
 
-.exercise-percent{
-  font-size:13px;
-  color:#85847c;
+.exercise {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 0;
+  border-bottom: 1px solid rgba(90,89,82,.28);
 }
 
-.delete{
-  font-size:20px;
-  color:#a09f97;
-  width:44px;
-  height:44px;
+.exercise-name {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -.8px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  padding: 10px 0;
+  color: #383732;
+  text-shadow: 0 0 2px rgba(50,50,45,.35);
 }
 
-.add{
-  display:block;
-  width:48px;
-  height:48px;
-  margin-top:20px;
-  padding:0;
-  font-size:27px;
-  color:#66655f;
-  text-align:left;
-  position:relative;
-  z-index:5;
+.exercise-percent {
+  font-size: 13px;
+  color: #85847e;
+}
+
+.delete {
+  font-size: 20px;
+  color: #999890;
+  width: 44px;
+  height: 44px;
+}
+
+.add {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin-top: 20px;
+  padding: 0;
+  font-size: 27px;
+  color: #65645e;
+  text-align: left;
+  position: relative;
+  z-index: 5;
 }
 
 /* КАРТА */
 
-#app.view-map{
-  padding-left:5px;
-  padding-right:5px;
+#app.view-map {
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
-.map-header{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin:0 13px 28px;
+.map-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 13px 28px;
 }
 
-.back{
-  font-size:23px;
-  width:44px;
-  height:44px;
-  text-align:left;
-  color:#55544e;
+.back {
+  font-size: 23px;
+  width: 44px;
+  height: 44px;
+  text-align: left;
+  color: #55544e;
 }
 
-.map-title{
-  font-size:14px;
-  overflow-wrap:anywhere;
-  letter-spacing:.5px;
-  text-shadow:0 0 1px rgba(40,40,35,.4);
+.map-title {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -.8px;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 2px rgba(40,40,35,.4);
 }
 
-.map-info{
-  display:flex;
-  justify-content:space-between;
-  margin:0 13px 20px;
-  font-size:12px;
-  color:#85847c;
-  letter-spacing:.7px;
+.map-info {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 13px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #85847c;
+  letter-spacing: -.4px;
 }
 
-#maps{
-  display:flex;
-  flex-direction:column;
-  gap:32px;
-  width:100%;
+#maps {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
 }
 
-.map{
-  width:100%;
-  position:relative;
+.map {
+  width: 100%;
+  position: relative;
 }
 
-/* ТОНКАЯ ДЫМКА НАД КАРТОЙ */
-
-.map:after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:
-    radial-gradient(ellipse at 25% 35%,rgba(255,255,255,.16),transparent 55%),
-    linear-gradient(110deg,rgba(255,255,255,.05),transparent 60%);
-  opacity:.7;
+.map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: manipulation;
+  filter: drop-shadow(0 0 1.3px rgba(255,255,255,.8));
 }
 
-.map svg{
-  display:block;
-  width:100%;
-  height:auto;
-  overflow:visible;
-  touch-action:manipulation;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.45));
+/* КЛЕТКИ */
+
+.cell {
+  fill: transparent;
 }
 
-.cell{fill:transparent}
-.cell.filled{fill:var(--cell)}
-
-.outline{
-  fill:none;
-  stroke:#57564f;
-  stroke-width:1.05;
-  stroke-linejoin:miter;
-  vector-effect:non-scaling-stroke;
+.cell.filled {
+  fill: var(--cell);
 }
 
-.footer{
-  margin:35px 13px 0;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  font-size:12px;
-  color:#77766f;
-  letter-spacing:.7px;
+/* КОНТУР */
+
+.outline {
+  fill: none;
+  stroke: #55544e;
+  stroke-width: 1.1;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 .7px rgba(255,255,255,.5));
 }
 
-button:active{opacity:.65}
+.footer {
+  margin: 35px 13px 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+  color: #77766f;
+  letter-spacing: -.3px;
+}
+
+button:active {
+  opacity: .65;
+}
 </style>
 </head>
 
@@ -236,6 +267,7 @@ button:active{opacity:.65}
 <div id="app">
 
 <section id="home">
+
   <div class="topline">
     <span>UNFOG</span>
     <span id="exerciseCount">00</span>
@@ -244,6 +276,7 @@ button:active{opacity:.65}
   <div id="exerciseList"></div>
 
   <button class="add" id="addExercise" type="button">+</button>
+
 </section>
 
 <section id="workout" class="hidden">
@@ -254,185 +287,212 @@ button:active{opacity:.65}
   </div>
 
   <div class="map-info">
-    <span>MAP PROGRESS</span>
+    <span>MAP✶PROGRESS</span>
     <span id="mapPercent">0%</span>
   </div>
 
   <div id="maps"></div>
 
   <div class="footer">
-    <span>REPS</span>
+    <span>TOTAL✶REPS</span>
     <span id="totalReps">000</span>
   </div>
 
 </section>
+
 </div>
 
 <script>
 (() => {
 
-const COLS=22;
-const ROWS=28;
-const CELL=18;
+const COLS = 22;
+const ROWS = 28;
+const CELL = 18;
 
-const W=COLS*CELL;
-const H=ROWS*CELL;
+const W = COLS * CELL;
+const H = ROWS * CELL;
 
-const KEY="workout-map-v2";
+const KEY = "workout-map-v2";
 
-const app=document.getElementById("app");
-const home=document.getElementById("home");
-const workout=document.getElementById("workout");
-const list=document.getElementById("exerciseList");
-const mapsEl=document.getElementById("maps");
+const app = document.getElementById("app");
+const home = document.getElementById("home");
+const workout = document.getElementById("workout");
+const list = document.getElementById("exerciseList");
+const mapsEl = document.getElementById("maps");
 
-let currentId=null;
+let currentId = null;
 
-let state={exercises:[]};
+let state = {
+  exercises: []
+};
 
 
-/* СЛУЧАЙНЫЕ ФОРМЫ ТЕРРИТОРИЙ */
+/* СИМВОЛ ВМЕСТО ПРОБЕЛОВ */
 
-function randomIsland(){
+function starText(text) {
+  return String(text).trim().replace(/\s+/g, "✶");
+}
 
-  const cells=[];
-  const seed=Math.random()*10000;
 
-  const mode=Math.floor(Math.random()*7);
+/* СЛУЧАЙНЫЙ ОСТРОВ */
 
-  const cx=10.5;
-  const cy=13.5;
+function randomIsland() {
 
-  const angleSeed=Math.random()*Math.PI*2;
+  const cells = [];
 
-  // Случайные параметры формы
+  const seed = Math.random() * 10000;
 
-  const rx=mode===1?9.8:
-           mode===2?6.5:
-           mode===3?10.5:
-           8.5+Math.random()*2;
+  const mode = Math.floor(Math.random() * 7);
 
-  const ry=mode===1?5.5:
-           mode===2?12:
-           mode===3?8:
-           8+Math.random()*3;
+  const blobs = [];
 
-  const lobes=2+Math.floor(Math.random()*5);
+  const rand = (a,b) => a + Math.random() * (b-a);
 
-  const waves=Array.from({length:6},()=>Math.random()*.17);
+  // Разные композиции
 
-  function noise(x,y){
-    return (
-      Math.sin(x*.83+seed)*.08+
-      Math.cos(y*.71-seed)*.07+
-      Math.sin((x+y)*.39+seed*.3)*.06
-    );
+  let count = 1;
+
+  if (mode === 1) count = 2;
+  if (mode === 2) count = 3;
+  if (mode === 3) count = 4;
+  if (mode === 4) count = 2;
+  if (mode === 5) count = 5;
+  if (mode === 6) count = 3;
+
+  // Основное направление территории
+
+  let angle = rand(0,Math.PI*2);
+
+  if (mode === 1) angle = 0;
+  if (mode === 2) angle = Math.PI/2;
+  if (mode === 3) angle = rand(0,Math.PI);
+  if (mode === 4) angle = rand(0,Math.PI*2);
+
+  const horizontal = Math.cos(angle);
+  const vertical = Math.sin(angle);
+
+  const centerX = 10.5;
+  const centerY = 13.5;
+
+  // Создание отдельных массивов
+
+  for (let i=0;i<count;i++) {
+
+    let t = count === 1 ? 0 : (i/(count-1)-.5);
+
+    let x = centerX + horizontal*t*11;
+    let y = centerY + vertical*t*15;
+
+    if (mode === 5) {
+      x += rand(-5,5);
+      y += rand(-5,5);
+    }
+
+    if (mode === 6) {
+      x += rand(-3,3);
+      y += rand(-7,7);
+    }
+
+    const rx = rand(3.5,7.5);
+    const ry = rand(3.5,8.5);
+
+    blobs.push({
+      x,
+      y,
+      rx,
+      ry,
+      rotation: rand(0,Math.PI*2),
+      phase: rand(0,Math.PI*2),
+      waves: rand(.08,.24),
+      lobes: 2+Math.floor(Math.random()*5)
+    });
   }
 
-  function inside(x,y){
+  // Иногда создаём длинную перемычку
 
-    const dx=x-cx;
-    const dy=y-cy;
+  const bridge = mode === 1 || mode === 3 || mode === 6;
 
-    const angle=Math.atan2(dy/ry,dx/rx);
-    const nx=dx/rx;
-    const ny=dy/ry;
+  function insideBlob(x,y,b) {
 
-    const radius=Math.sqrt(nx*nx+ny*ny);
+    const dx = x-b.x;
+    const dy = y-b.y;
 
-    const wave=
-      waves[0]*Math.sin(angle*lobes+angleSeed)+
-      waves[1]*Math.sin(angle*(lobes+2)+seed)+
-      waves[2]*Math.cos(angle*7-seed)+
-      waves[3]*Math.sin(angle*11+seed);
+    const cos = Math.cos(b.rotation);
+    const sin = Math.sin(b.rotation);
 
-    let boundary=.82+wave;
+    const rx = dx*cos + dy*sin;
+    const ry = -dx*sin + dy*cos;
 
-    // Разветвлённая форма
+    const nx = rx/b.rx;
+    const ny = ry/b.ry;
 
-    if(mode===4){
-      boundary+=.16*Math.sin(angle*3+seed);
-      boundary+=.10*Math.cos(angle*5-seed);
-    }
+    const angle = Math.atan2(ny,nx);
 
-    // Сильно вытянутая форма
+    const radius = Math.sqrt(nx*nx+ny*ny);
 
-    if(mode===1){
-      boundary+=.12*Math.sin(angle*2+seed);
-    }
+    const wave =
+      b.waves*Math.sin(angle*b.lobes+b.phase) +
+      b.waves*.45*Math.cos(angle*7-b.phase);
 
-    // Много отдельных бухт
-
-    if(mode===5){
-      boundary+=.22*Math.cos(angle*4+seed);
-    }
-
-    return radius<boundary+noise(x,y);
+    return radius < .86 + wave;
   }
 
-  // Архипелаг из нескольких соединённых масс
+  function inside(x,y) {
 
-  const blobs=[];
+    let result = false;
 
-  if(mode===3 || mode===5){
-
-    const count=3+Math.floor(Math.random()*4);
-
-    for(let i=0;i<count;i++){
-      blobs.push({
-        x:cx+(Math.random()-.5)*11,
-        y:cy+(Math.random()-.5)*19,
-        rx:3+Math.random()*4,
-        ry:3+Math.random()*5
-      });
-    }
-  }
-
-  // Основная генерация
-
-  for(let y=0;y<ROWS;y++){
-    for(let x=0;x<COLS;x++){
-
-      let yes=false;
-
-      if(mode===3 || mode===5){
-
-        for(const b of blobs){
-
-          const dx=(x-b.x)/b.rx;
-          const dy=(y-b.y)/b.ry;
-
-          if(dx*dx+dy*dy<1+noise(x,y)){
-            yes=true;
-            break;
-          }
-        }
-
-        // Перемычки между массами
-
-        if(!yes && mode===3){
-          yes=inside(x,y)&&Math.random()<.35;
-        }
-
-      }else{
-        yes=inside(x,y);
+    for (const b of blobs) {
+      if (insideBlob(x,y,b)) {
+        result = true;
+        break;
       }
+    }
 
-      // Дополнительные разрывы и бухты
+    if (!result && bridge && count > 1) {
 
-      if(yes && Math.random()>.975){
-        yes=false;
+      const dx = x-centerX;
+      const dy = y-centerY;
+
+      const along = dx*horizontal + dy*vertical;
+      const across = -dx*vertical + dy*horizontal;
+
+      if (
+        Math.abs(along)<10 &&
+        Math.abs(across)<1.25
+      ) {
+        result = true;
       }
+    }
 
-      if(yes){
+    // Неровность края
+
+    if (result) {
+
+      const noise =
+        Math.sin(x*.9+seed)*.045 +
+        Math.cos(y*.8-seed)*.045 +
+        Math.sin((x+y)*.5+seed)*.035;
+
+      if (Math.random() < .025) result=false;
+      else if (noise < -.07 && Math.random()<.15) result=false;
+    }
+
+    return result;
+  }
+
+  for (let y=0;y<ROWS;y++) {
+    for (let x=0;x<COLS;x++) {
+
+      if (inside(x,y)) {
         cells.push([x,y,false]);
       }
+
     }
   }
 
-  // Защита от слишком маленькой формы
+  // Защита от слишком маленькой карты
 
-  if(cells.length<35){
+  if (cells.length < 45) {
     return randomIsland();
   }
 
@@ -442,25 +502,27 @@ function randomIsland(){
 
 /* КОНТУР */
 
-function makeOutline(cells){
+function makeOutline(cells) {
 
-  const set=new Set(cells.map(c=>`${c[0]},${c[1]}`));
+  const set = new Set(
+    cells.map(c => `${c[0]},${c[1]}`)
+  );
 
-  const has=(x,y)=>set.has(`${x},${y}`);
+  const has = (x,y) => set.has(`${x},${y}`);
 
-  const lines=[];
+  const lines = [];
 
-  for(const [x,y] of cells){
+  for (const [x,y] of cells) {
 
-    const x1=x*CELL;
-    const y1=y*CELL;
-    const x2=x1+CELL;
-    const y2=y1+CELL;
+    const x1 = x*CELL;
+    const y1 = y*CELL;
+    const x2 = x1+CELL;
+    const y2 = y1+CELL;
 
-    if(!has(x,y-1)) lines.push(`M${x1} ${y1}H${x2}`);
-    if(!has(x+1,y)) lines.push(`M${x2} ${y1}V${y2}`);
-    if(!has(x,y+1)) lines.push(`M${x2} ${y2}H${x1}`);
-    if(!has(x-1,y)) lines.push(`M${x1} ${y2}V${y1}`);
+    if (!has(x,y-1)) lines.push(`M${x1} ${y1}H${x2}`);
+    if (!has(x+1,y)) lines.push(`M${x2} ${y1}V${y2}`);
+    if (!has(x,y+1)) lines.push(`M${x2} ${y2}H${x1}`);
+    if (!has(x-1,y)) lines.push(`M${x1} ${y2}V${y1}`);
   }
 
   return lines.join("");
@@ -469,10 +531,11 @@ function makeOutline(cells){
 
 /* СОХРАНЕНИЕ */
 
-function save(){
-  try{
+function save() {
+
+  try {
     localStorage.setItem(KEY,JSON.stringify(state));
-  }catch(e){
+  } catch(e) {
     console.log("Ошибка сохранения",e);
   }
 }
@@ -480,52 +543,54 @@ function save(){
 
 /* ПРОГРЕСС */
 
-function getProgress(exercise){
+function getProgress(exercise) {
 
-  const cells=exercise.maps.flatMap(m=>m.cells);
+  const cells = exercise.maps.flatMap(m=>m.cells);
 
-  if(!cells.length)return 0;
+  if (!cells.length) return 0;
 
-  const filled=cells.filter(c=>c[2]).length;
+  const filled = cells.filter(c=>c[2]).length;
 
   return Math.floor(filled/cells.length*100);
 }
 
 
-/* ГЛАВНЫЙ ЭКРАН */
+/* ГЛАВНАЯ */
 
-function renderHome(){
+function renderHome() {
 
   list.replaceChildren();
 
-  document.getElementById("exerciseCount").textContent=
+  document.getElementById("exerciseCount").textContent =
     String(state.exercises.length).padStart(2,"0");
 
   state.exercises.forEach(exercise=>{
 
-    const row=document.createElement("div");
-    row.className="exercise";
+    const row = document.createElement("div");
+    row.className = "exercise";
 
-    const name=document.createElement("button");
-    name.className="exercise-name";
-    name.type="button";
-    name.textContent=exercise.name;
-    name.onclick=()=>openExercise(exercise.id);
+    const name = document.createElement("button");
+    name.className = "exercise-name";
+    name.type = "button";
 
-    const percent=document.createElement("span");
-    percent.className="exercise-percent";
-    percent.textContent=getProgress(exercise)+"%";
+    name.textContent = starText(exercise.name);
 
-    const del=document.createElement("button");
-    del.className="delete";
-    del.type="button";
-    del.textContent="×";
+    name.onclick = ()=>openExercise(exercise.id);
 
-    del.onclick=()=>{
+    const percent = document.createElement("span");
+    percent.className = "exercise-percent";
+    percent.textContent = getProgress(exercise)+"%";
 
-      if(!confirm("Удалить упражнение?"))return;
+    const del = document.createElement("button");
+    del.className = "delete";
+    del.type = "button";
+    del.textContent = "×";
 
-      state.exercises=state.exercises.filter(
+    del.onclick = ()=>{
+
+      if (!confirm("Удалить упражнение?")) return;
+
+      state.exercises = state.exercises.filter(
         e=>e.id!==exercise.id
       );
 
@@ -539,19 +604,27 @@ function renderHome(){
 }
 
 
-/* ДОБАВЛЕНИЕ */
+/* ДОБАВЛЕНИЕ УПРАЖНЕНИЯ */
 
-document.getElementById("addExercise").onclick=()=>{
+document.getElementById("addExercise").onclick = ()=>{
 
-  const name=prompt("Название упражнения:");
+  const name = prompt("Название упражнения:");
 
-  if(!name || !name.trim())return;
+  if (!name || !name.trim()) return;
 
   state.exercises.push({
-    id:Date.now().toString()+Math.random().toString(36).slice(2),
-    name:name.trim(),
-    reps:0,
-    maps:[{cells:randomIsland()}]
+
+    id: Date.now().toString()+
+      Math.random().toString(36).slice(2),
+
+    name: name.trim(),
+
+    reps: 0,
+
+    maps: [
+      {cells:randomIsland()}
+    ]
+
   });
 
   save();
@@ -561,26 +634,31 @@ document.getElementById("addExercise").onclick=()=>{
 
 /* ТЕКУЩЕЕ УПРАЖНЕНИЕ */
 
-function getCurrent(){
-  return state.exercises.find(e=>e.id===currentId);
+function getCurrent() {
+
+  return state.exercises.find(
+    e=>e.id===currentId
+  );
 }
 
 
-/* ОТКРЫТИЕ */
+/* ОТКРЫТИЕ КАРТЫ */
 
-function openExercise(id){
+function openExercise(id) {
 
-  currentId=id;
+  currentId = id;
 
-  const exercise=getCurrent();
+  const exercise = getCurrent();
 
-  if(!exercise)return;
+  if (!exercise) return;
 
   home.classList.add("hidden");
   workout.classList.remove("hidden");
+
   app.classList.add("view-map");
 
-  document.getElementById("mapTitle").textContent=exercise.name;
+  document.getElementById("mapTitle").textContent =
+    starText(exercise.name);
 
   renderWorkout();
 
@@ -590,12 +668,13 @@ function openExercise(id){
 
 /* НАЗАД */
 
-document.getElementById("back").onclick=()=>{
+document.getElementById("back").onclick = ()=>{
 
-  currentId=null;
+  currentId = null;
 
   workout.classList.add("hidden");
   home.classList.remove("hidden");
+
   app.classList.remove("view-map");
 
   renderHome();
@@ -604,31 +683,33 @@ document.getElementById("back").onclick=()=>{
 };
 
 
-/* ОТРИСОВКА */
+/* ОТРИСОВКА КАРТ */
 
-function renderWorkout(){
+function renderWorkout() {
 
-  const exercise=getCurrent();
+  const exercise = getCurrent();
 
-  if(!exercise)return;
+  if (!exercise) return;
 
   mapsEl.replaceChildren();
 
   exercise.maps.forEach((map,mapIndex)=>{
 
-    const section=document.createElement("div");
-    section.className="map";
+    const section = document.createElement("div");
+    section.className = "map";
 
-    const svg=document.createElementNS(
-      "http://www.w3.org/2000/svg","svg"
+    const svg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg"
     );
 
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
     map.cells.forEach((cell,i)=>{
 
-      const rect=document.createElementNS(
-        "http://www.w3.org/2000/svg","rect"
+      const rect = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "rect"
       );
 
       rect.setAttribute("x",cell[0]*CELL);
@@ -636,14 +717,19 @@ function renderWorkout(){
       rect.setAttribute("width",CELL);
       rect.setAttribute("height",CELL);
 
-      rect.setAttribute("class",cell[2]?"cell filled":"cell");
-      rect.dataset.cell=i;
+      rect.setAttribute(
+        "class",
+        cell[2]?"cell filled":"cell"
+      );
+
+      rect.dataset.cell = i;
 
       svg.appendChild(rect);
     });
 
-    const outline=document.createElementNS(
-      "http://www.w3.org/2000/svg","path"
+    const outline = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
     );
 
     outline.setAttribute("d",makeOutline(map.cells));
@@ -653,9 +739,9 @@ function renderWorkout(){
 
     svg.addEventListener("pointerdown",event=>{
 
-      const target=event.target.closest("[data-cell]");
+      const target = event.target.closest("[data-cell]");
 
-      if(!target)return;
+      if (!target) return;
 
       event.preventDefault();
 
@@ -672,45 +758,51 @@ function renderWorkout(){
 
 /* ПОВТОРЕНИЯ */
 
-function addRep(mapIndex,cellIndex){
+function addRep(mapIndex,cellIndex) {
 
-  const exercise=getCurrent();
+  const exercise = getCurrent();
 
-  if(!exercise)return;
+  if (!exercise) return;
 
-  const map=exercise.maps[mapIndex];
-  const cell=map?.cells[cellIndex];
+  const map = exercise.maps[mapIndex];
+  const cell = map?.cells[cellIndex];
 
-  if(!cell)return;
+  if (!cell) return;
 
-  if(cell[2]){
+  if (cell[2]) {
 
-    cell[2]=false;
-    exercise.reps=Math.max(0,exercise.reps-1);
+    cell[2] = false;
 
-  }else{
+    exercise.reps = Math.max(
+      0,
+      exercise.reps-1
+    );
 
-    cell[2]=true;
+  } else {
+
+    cell[2] = true;
     exercise.reps++;
   }
 
-  const svg=mapsEl.children[mapIndex]?.querySelector("svg");
+  const svg = mapsEl.children[mapIndex]?.querySelector("svg");
 
-  const rect=svg?.querySelector(`[data-cell="${cellIndex}"]`);
+  const rect = svg?.querySelector(
+    `[data-cell="${cellIndex}"]`
+  );
 
-  if(rect){
+  if (rect) {
     rect.setAttribute(
       "class",
       cell[2]?"cell filled":"cell"
     );
   }
 
-  const lastMap=exercise.maps[exercise.maps.length-1];
+  const lastMap = exercise.maps[exercise.maps.length-1];
 
-  if(
+  if (
     lastMap.cells.every(c=>c[2]) &&
     mapIndex===exercise.maps.length-1
-  ){
+  ) {
 
     exercise.maps.push({
       cells:randomIsland()
@@ -726,16 +818,16 @@ function addRep(mapIndex,cellIndex){
 
 /* ИНФОРМАЦИЯ */
 
-function updateInfo(){
+function updateInfo() {
 
-  const exercise=getCurrent();
+  const exercise = getCurrent();
 
-  if(!exercise)return;
+  if (!exercise) return;
 
-  document.getElementById("mapPercent").textContent=
+  document.getElementById("mapPercent").textContent =
     getProgress(exercise)+"%";
 
-  document.getElementById("totalReps").textContent=
+  document.getElementById("totalReps").textContent =
     String(exercise.reps).padStart(3,"0");
 
   save();
@@ -744,36 +836,42 @@ function updateInfo(){
 
 /* ЗАГРУЗКА */
 
-try{
+try {
 
-  const saved=JSON.parse(localStorage.getItem(KEY));
+  const saved = JSON.parse(
+    localStorage.getItem(KEY)
+  );
 
-  if(saved && Array.isArray(saved.exercises)){
-    state=saved;
+  if (saved && Array.isArray(saved.exercises)) {
+    state = saved;
   }
 
-}catch(e){}
+} catch(e) {}
 
 
-/* СТАРАЯ ВЕРСИЯ */
+/* МИГРАЦИЯ СТАРОЙ ВЕРСИИ */
 
-if(!state.exercises.length){
+if (!state.exercises.length) {
 
-  try{
+  try {
 
-    const old=JSON.parse(localStorage.getItem("workout-map-v1"));
+    const old = JSON.parse(
+      localStorage.getItem("workout-map-v1")
+    );
 
-    if(old && Array.isArray(old.maps)){
+    if (old && Array.isArray(old.maps)) {
 
       state.exercises.push({
+
         id:"old-workout",
         name:"Тренировка",
         reps:old.total||0,
         maps:old.maps
+
       });
     }
 
-  }catch(e){}
+  } catch(e) {}
 }
 
 
