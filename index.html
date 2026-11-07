@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f7f7f5">
+<title>Workout Map</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #f7f7f5; color: #111; }
+  body {
+    font-family: "Courier New", monospace;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    overflow-x: hidden;
+  }
+  main { min-height: 100svh; padding: 18px 0 22px; display: flex; flex-direction: column; }
+  #maps { width: 100%; display: flex; flex-direction: column; gap: 30px; }
+  .map { width: 100%; display: block; touch-action: manipulation; }
+  .map svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .cell { fill: transparent; stroke: none; }
+  .cell.filled { fill: #111; }
+  .outline { fill: none; stroke: #111; stroke-width: 1.15; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+  footer {
+    margin-top: auto; padding: 24px 22px 0;
+    display: flex; justify-content: flex-end; align-items: baseline; gap: 10px;
+    font-size: 14px; letter-spacing: .04em;
+  }
+  #count { font-size: 22px; }
+</style>
+</head>
+<body>
+<main>
+  <div id="maps" aria-label="Карта повторений"></div>
+  <footer><span>REPS</span><span id="count">000</span></footer>
+</main>
+<script>
+(() => {
+  const COLS = 22, ROWS = 28, CELL = 18, GAP = 0;
+  const W = COLS * CELL, H = ROWS * CELL;
+  const STORAGE_KEY = "workout-map-v1";
+  const mapsEl = document.getElementById("maps");
+  const countEl = document.getElementById("count");
+  let state;
+
+  function randomIsland() {
+    const cells = [];
+    const cx = (COLS - 1) / 2, cy = (ROWS - 1) / 2;
+    const seed = Math.random() * 1000;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const nx = (x - cx) / (COLS * .49);
+        const ny = (y - cy) / (ROWS * .49);
+        const angle = Math.atan2(ny, nx);
+        const wave = 0.09 * Math.sin(angle * 5 + seed) +
+                     0.055 * Math.sin(angle * 9 - seed * .7) +
+                     0.035 * Math.cos(angle * 13 + seed * .3);
+        const radius = Math.sqrt(nx * nx * .82 + ny * ny * 1.08);
+        const edge = 0.83 + wave;
+        if (radius < edge && Math.random() > 0.035) cells.push([x, y, false]);
+      }
+    }
+    // Keep the island connected and avoid a blank or tiny map.
+    return cells.length > 180 ? cells : randomIsland();
+  }
+
+  function makeOutline(cells) {
+    const set = new Set(cells.map(c => `${c[0]},${c[1]}`));
+    const lines = [];
+    const has = (x,y) => set.has(`${x},${y}`);
+    for (const [x,y] of cells) {
+      const x1=x*CELL, y1=y*CELL, x2=x1+CELL, y2=y1+CELL;
+      if (!has(x,y-1)) lines.push(`M${x1} ${y1}H${x2}`);
+      if (!has(x+1,y)) lines.push(`M${x2} ${y1}V${y2}`);
+      if (!has(x,y+1)) lines.push(`M${x2} ${y2}H${x1}`);
+      if (!has(x-1,y)) lines.push(`M${x1} ${y2}V${y1}`);
+    }
+    return lines.join("");
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function renderMap(map, index) {
+    const section = document.createElement("section");
+    section.className = "map";
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("role", "button");
+    svg.setAttribute("aria-label", "Нажми, чтобы добавить одно повторение");
+    const cellGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    map.cells.forEach((cell, i) => {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", cell[0] * CELL);
+      rect.setAttribute("y", cell[1] * CELL);
+      rect.setAttribute("width", CELL);
+      rect.setAttribute("height", CELL);
+      rect.setAttribute("class", cell[2] ? "cell filled" : "cell");
+      rect.dataset.cell = i;
+      cellGroup.appendChild(rect);
+    });
+    const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    outline.setAttribute("d", makeOutline(map.cells));
+    outline.setAttribute("class", "outline");
+    svg.append(cellGroup, outline);
+    svg.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      addRep(index);
+    });
+    section.appendChild(svg);
+    return section;
+  }
+
+  function draw() {
+    mapsEl.replaceChildren();
+    state.maps.forEach((map, i) => mapsEl.appendChild(renderMap(map, i)));
+    countEl.textContent = String(state.total).padStart(3, "0");
+  }
+
+  function addRep(mapIndex) {
+    let map = state.maps[mapIndex];
+    if (!map) return;
+    const available = [];
+    map.cells.forEach((cell, i) => { if (!cell[2]) available.push(i); });
+    if (!available.length) {
+      map = { cells: randomIsland() };
+      state.maps.push(map);
+      mapIndex = state.maps.length - 1;
+      draw();
+      return addRep(mapIndex);
+    }
+    const pick = available[Math.floor(Math.random() * available.length)];
+    map.cells[pick][2] = true;
+    state.total += 1;
+    const svg = mapsEl.children[mapIndex]?.querySelector("svg");
+    const rect = svg?.querySelector(`[data-cell="${pick}"]`);
+    if (rect) rect.setAttribute("class", "cell filled");
+    countEl.textContent = String(state.total).padStart(3, "0");
+    if (available.length === 1) {
+      save();
+      state.maps.push({ cells: randomIsland() });
+      mapsEl.appendChild(renderMap(state.maps[state.maps.length - 1], state.maps.length - 1));
+    }
+    save();
+  }
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && Array.isArray(saved.maps) && saved.maps.length && Number.isFinite(saved.total)) state = saved;
+  } catch(e) {}
+  if (!state) state = { total: 0, maps: [{ cells: randomIsland() }] };
+  // Ensure an empty island is available at the end.
+  const last = state.maps[state.maps.length - 1];
+  if (last && last.cells.every(c => c[2])) state.maps.push({ cells: randomIsland() });
+  draw();
+  save();
+})();
+</script>
+</body>
+</html>
