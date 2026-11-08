@@ -51,7 +51,7 @@ body::before {
   inset: 0;
   z-index: 30;
   pointer-events: none;
-  opacity: .19;
+  opacity: .07;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   background-size: 150px 150px;
 }
@@ -64,14 +64,9 @@ body::after {
   inset: -10px;
   z-index: 29;
   pointer-events: none;
-  backdrop-filter: blur(1.1px);
-  -webkit-backdrop-filter: blur(1.1px);
-  background:
-    radial-gradient(ellipse at 20% 20%,
-      rgba(255,255,255,.34), transparent 55%),
-    radial-gradient(ellipse at 85% 65%,
-      rgba(255,255,255,.28), transparent 50%),
-    rgba(245,244,239,.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: transparent;
 }
 
 button {
@@ -115,7 +110,7 @@ button {
   font-weight: 600;
   letter-spacing: -.8px;
   color: #4b4a45;
-  text-shadow: 0 0 2px rgba(50,50,45,.3);
+  text-shadow: none;
 }
 
 #exerciseList {
@@ -141,7 +136,7 @@ button {
   overflow-wrap: anywhere;
   padding: 10px 0;
   color: #383732;
-  text-shadow: 0 0 2px rgba(50,50,45,.35);
+  text-shadow: none;
 }
 
 .exercise-percent {
@@ -196,7 +191,7 @@ button {
   font-weight: 500;
   letter-spacing: -.8px;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 2px rgba(40,40,35,.4);
+  text-shadow: none;
 }
 
 .map-info {
@@ -213,7 +208,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 30px;
-  width: 100%;
+  width: 104%;
+  margin-left: -2%;
 }
 
 .map {
@@ -227,7 +223,7 @@ button {
   height: auto;
   overflow: visible;
   touch-action: manipulation;
-  filter: drop-shadow(0 0 1.3px rgba(255,255,255,.8));
+  filter: none;
 }
 
 /* КЛЕТКИ */
@@ -249,7 +245,7 @@ button {
   stroke-width: 1.1;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 .7px rgba(255,255,255,.5));
+  filter: none;
 }
 
 .footer {
