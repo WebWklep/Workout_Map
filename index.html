@@ -104,7 +104,7 @@ button {
 
 .exercise {
   display: grid;
-  grid-template-columns: minmax(0,1fr) auto 44px;
+  grid-template-columns: minmax(0,1fr) auto 38px 38px;
   align-items: center;
   gap: 8px;
   padding: 8px 0;
@@ -128,11 +128,40 @@ button {
   color: #85847e;
 }
 
-.delete {
+.row-action {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 40px;
   font-size: 20px;
+  color: #85847e;
+}
+
+.edit-name {
+  font-size: 17px;
+}
+
+.delete {
+  font-size: 21px;
   color: #999890;
-  width: 44px;
-  height: 44px;
+}
+
+.map-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 5px 5px;
+}
+
+.reroll-map {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #353430;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
 }
 
 .add {
@@ -574,8 +603,27 @@ function renderHome() {
     percent.className = "exercise-percent";
     percent.textContent = getProgress(exercise)+"%";
 
+    const edit = document.createElement("button");
+    edit.className = "row-action edit-name";
+    edit.type = "button";
+    edit.textContent = "✎";
+    edit.setAttribute("aria-label","Изменить название");
+
+    edit.onclick = ()=>{
+      const nextName = prompt("Новое название упражнения:",exercise.name);
+      if (!nextName || !nextName.trim()) return;
+
+      exercise.name = nextName.trim();
+      save();
+      renderHome();
+
+      if (currentId === exercise.id) {
+        document.getElementById("mapTitle").textContent = starText(exercise.name);
+      }
+    };
+
     const del = document.createElement("button");
-    del.className = "delete";
+    del.className = "row-action delete";
     del.type = "button";
     del.textContent = "×";
 
@@ -591,7 +639,7 @@ function renderHome() {
       renderHome();
     };
 
-    row.append(name,percent,del);
+    row.append(name,percent,edit,del);
     list.appendChild(row);
   });
 }
@@ -691,6 +739,20 @@ function renderWorkout() {
     const section = document.createElement("div");
     section.className = "map";
 
+    const toolbar = document.createElement("div");
+    toolbar.className = "map-toolbar";
+
+    const reroll = document.createElement("button");
+    reroll.className = "reroll-map";
+    reroll.type = "button";
+    reroll.textContent = "⚄";
+    reroll.setAttribute("aria-label","Сменить контур карты");
+    reroll.title = "Сменить контур";
+
+    reroll.onclick = ()=>rerollMap(mapIndex);
+    toolbar.appendChild(reroll);
+    section.appendChild(toolbar);
+
     const svg = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "svg"
@@ -758,6 +820,50 @@ function renderWorkout() {
   });
 
   updateInfo();
+}
+
+
+/* СЛУЧАЙНЫЙ НОВЫЙ КОНТУР С СОХРАНЕНИЕМ ОТМЕТОК */
+
+function rerollMap(mapIndex) {
+
+  const exercise = getCurrent();
+  if (!exercise) return;
+
+  const oldMap = exercise.maps[mapIndex];
+  if (!oldMap) return;
+
+  const filledCount = oldMap.cells.filter(cell=>cell[2]).length;
+
+  // Создаём новый остров и переносим на него все отметки.
+  const replacement = {cells:randomIsland()};
+  const firstBatch = Math.min(filledCount,replacement.cells.length);
+
+  for (let i=0;i<firstBatch;i++) {
+    replacement.cells[i][2] = true;
+  }
+
+  let remaining = filledCount-firstBatch;
+  const overflowMaps = [];
+
+  // Если новый остров меньше числа уже отмеченных ячеек,
+  // остаток переносится на дополнительные полностью/частично заполненные карты.
+  while (remaining > 0) {
+    const nextMap = {cells:randomIsland()};
+    const batch = Math.min(remaining,nextMap.cells.length);
+
+    for (let i=0;i<batch;i++) {
+      nextMap.cells[i][2] = true;
+    }
+
+    remaining -= batch;
+    overflowMaps.push(nextMap);
+  }
+
+  exercise.maps.splice(mapIndex,1,replacement,...overflowMaps);
+
+  save();
+  renderWorkout();
 }
 
 
