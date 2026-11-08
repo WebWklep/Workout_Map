@@ -221,12 +221,46 @@ button {
 
 .map-info {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
   margin: 0 13px 20px;
   font-size: 13px;
   font-weight: 500;
   color: #85847c;
   letter-spacing: -.4px;
+}
+
+.map-progress-value {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: -2px;
+}
+
+.reroll-map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #222;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.reroll-map:focus,
+.reroll-map:active {
+  outline: none;
+  background: transparent;
 }
 
 #maps {
@@ -325,6 +359,7 @@ button:active {
     <span>MAP✶PROGRESS</span>
     <span class="map-progress-value">
       <button class="reroll-map" id="rerollLargest" type="button" aria-label="Сменить самый большой контур" title="Сменить самый большой контур">⚄</button>
+      <button class="reroll-map" id="rerollLargestAgain" type="button" aria-label="Ещё один вариант контура" title="Ещё один вариант контура">⚄</button>
       <span id="mapPercent">0%</span>
     </span>
   </div>
@@ -880,6 +915,7 @@ function rerollLargestMap() {
 }
 
 document.getElementById("rerollLargest").onclick = rerollLargestMap;
+document.getElementById("rerollLargestAgain").onclick = rerollLargestMap;
 
 
 /* ПОВТОРЕНИЯ */
