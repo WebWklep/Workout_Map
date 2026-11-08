@@ -104,7 +104,7 @@ button {
 
 .exercise {
   display: grid;
-  grid-template-columns: minmax(0,1fr) auto 38px 38px;
+  grid-template-columns: minmax(0,1fr) auto 38px;
   align-items: center;
   gap: 8px;
   padding: 8px 0;
@@ -137,31 +137,41 @@ button {
   color: #85847e;
 }
 
-.edit-name {
-  font-size: 17px;
-}
-
 .delete {
   font-size: 21px;
   color: #999890;
 }
 
-.map-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 5px 5px;
+.edit-title {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  margin-left: auto;
+  flex: 0 0 36px;
+  color: #77766f;
+  font-size: 18px;
 }
 
 .reroll-map {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #d0cfc8;
   border-radius: 50%;
-  background: #353430;
-  color: #fff;
-  font-size: 22px;
+  background: #fff;
+  color: #222;
+  font-size: 21px;
   line-height: 1;
+  flex: 0 0 30px;
+}
+
+.map-progress-value {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .add {
@@ -187,7 +197,7 @@ button {
 .map-header {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   margin: 0 13px 28px;
 }
 
@@ -205,6 +215,8 @@ button {
   letter-spacing: -.8px;
   overflow-wrap: anywhere;
   text-shadow: none;
+  min-width: 0;
+  flex: 1;
 }
 
 .map-info {
@@ -306,11 +318,15 @@ button:active {
   <div class="map-header">
     <button class="back" id="back" type="button">←</button>
     <span class="map-title" id="mapTitle"></span>
+    <button class="edit-title" id="editTitle" type="button" aria-label="Изменить название">✎</button>
   </div>
 
   <div class="map-info">
     <span>MAP✶PROGRESS</span>
-    <span id="mapPercent">0%</span>
+    <span class="map-progress-value">
+      <button class="reroll-map" id="rerollLargest" type="button" aria-label="Сменить самый большой контур" title="Сменить самый большой контур">⚄</button>
+      <span id="mapPercent">0%</span>
+    </span>
   </div>
 
   <div id="maps"></div>
@@ -603,25 +619,6 @@ function renderHome() {
     percent.className = "exercise-percent";
     percent.textContent = getProgress(exercise)+"%";
 
-    const edit = document.createElement("button");
-    edit.className = "row-action edit-name";
-    edit.type = "button";
-    edit.textContent = "✎";
-    edit.setAttribute("aria-label","Изменить название");
-
-    edit.onclick = ()=>{
-      const nextName = prompt("Новое название упражнения:",exercise.name);
-      if (!nextName || !nextName.trim()) return;
-
-      exercise.name = nextName.trim();
-      save();
-      renderHome();
-
-      if (currentId === exercise.id) {
-        document.getElementById("mapTitle").textContent = starText(exercise.name);
-      }
-    };
-
     const del = document.createElement("button");
     del.className = "row-action delete";
     del.type = "button";
@@ -639,7 +636,7 @@ function renderHome() {
       renderHome();
     };
 
-    row.append(name,percent,edit,del);
+    row.append(name,percent,del);
     list.appendChild(row);
   });
 }
@@ -707,6 +704,21 @@ function openExercise(id) {
 }
 
 
+/* РЕДАКТИРОВАНИЕ НАЗВАНИЯ В ЗАГОЛОВКЕ */
+
+document.getElementById("editTitle").onclick = ()=>{
+  const exercise = getCurrent();
+  if (!exercise) return;
+
+  const nextName = prompt("Новое название упражнения:",exercise.name);
+  if (!nextName || !nextName.trim()) return;
+
+  exercise.name = nextName.trim();
+  document.getElementById("mapTitle").textContent = starText(exercise.name);
+  save();
+};
+
+
 /* НАЗАД */
 
 document.getElementById("back").onclick = ()=>{
@@ -738,20 +750,6 @@ function renderWorkout() {
 
     const section = document.createElement("div");
     section.className = "map";
-
-    const toolbar = document.createElement("div");
-    toolbar.className = "map-toolbar";
-
-    const reroll = document.createElement("button");
-    reroll.className = "reroll-map";
-    reroll.type = "button";
-    reroll.textContent = "⚄";
-    reroll.setAttribute("aria-label","Сменить контур карты");
-    reroll.title = "Сменить контур";
-
-    reroll.onclick = ()=>rerollMap(mapIndex);
-    toolbar.appendChild(reroll);
-    section.appendChild(toolbar);
 
     const svg = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -825,10 +823,25 @@ function renderWorkout() {
 
 /* СЛУЧАЙНЫЙ НОВЫЙ КОНТУР С СОХРАНЕНИЕМ ОТМЕТОК */
 
-function rerollMap(mapIndex) {
+function rerollLargestMap() {
 
   const exercise = getCurrent();
   if (!exercise) return;
+
+  if (!exercise.maps.length) {
+    exercise.maps.push({cells:randomIsland()});
+    save();
+    renderWorkout();
+    return;
+  }
+
+  // Меняем только самый крупный контур по количеству ячеек.
+  let mapIndex = 0;
+  for (let i=1;i<exercise.maps.length;i++) {
+    if (exercise.maps[i].cells.length > exercise.maps[mapIndex].cells.length) {
+      mapIndex = i;
+    }
+  }
 
   const oldMap = exercise.maps[mapIndex];
   if (!oldMap) return;
@@ -866,6 +879,8 @@ function rerollMap(mapIndex) {
   renderWorkout();
 }
 
+document.getElementById("rerollLargest").onclick = rerollLargestMap;
+
 
 /* ПОВТОРЕНИЯ */
 
@@ -893,6 +908,15 @@ function addRep(mapIndex,cellIndex) {
 
     cell[2] = true;
     exercise.reps++;
+  }
+
+  // Если контур полностью опустел, убираем его из карты.
+  if (!cell[2] && map.cells.every(c=>!c[2])) {
+    exercise.maps.splice(mapIndex,1);
+    renderWorkout();
+    updateInfo();
+    save();
+    return;
   }
 
   const svg = mapsEl.children[mapIndex]?.querySelector("svg");
