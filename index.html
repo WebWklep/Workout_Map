@@ -21,6 +21,11 @@
 
 html {
   background: var(--paper);
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 body {
@@ -238,6 +243,7 @@ button {
 /* КОНТУР */
 
 .outline {
+  pointer-events: none;
   fill: none;
   stroke: #55544e;
   stroke-width: 1.1;
@@ -254,6 +260,13 @@ button {
   font-size: 13px;
   color: #77766f;
   letter-spacing: -.3px;
+}
+
+#totalReps {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .2px;
+  font-variant-numeric: tabular-nums;
 }
 
 button:active {
@@ -737,15 +750,27 @@ function renderWorkout() {
 
     svg.appendChild(outline);
 
+    // Определяем ячейку по координатам касания, а не по event.target.
+    // Это исключает промахи из-за SVG-контура и особенностей мобильного браузера.
     svg.addEventListener("pointerdown",event=>{
 
-      const target = event.target.closest("[data-cell]");
+      const box = svg.getBoundingClientRect();
 
-      if (!target) return;
+      if (!box.width || !box.height) return;
+
+      const x = Math.floor((event.clientX - box.left) / box.width * COLS);
+      const y = Math.floor((event.clientY - box.top) / box.height * ROWS);
+
+      if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return;
+
+      const cellIndex = map.cells.findIndex(
+        cell => cell[0] === x && cell[1] === y
+      );
+
+      if (cellIndex < 0) return;
 
       event.preventDefault();
-
-      addRep(mapIndex,Number(target.dataset.cell));
+      addRep(mapIndex,cellIndex);
     });
 
     section.appendChild(svg);
