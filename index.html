@@ -154,24 +154,28 @@ button {
 }
 
 .reroll-map {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   padding: 0;
-  border: 1px solid #d0cfc8;
-  border-radius: 50%;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #222;
-  font-size: 21px;
+  font-size: 23px;
   line-height: 1;
-  flex: 0 0 30px;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .map-progress-value {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
+  margin: 0 0 0 auto;
 }
 
 .add {
@@ -221,10 +225,10 @@ button {
 
 .map-info {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 13px 20px;
   font-size: 13px;
   font-weight: 500;
@@ -308,13 +312,17 @@ button {
 }
 
 .footer {
-  margin: 35px 13px 0;
+  position: fixed;
+  left: 13px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  margin: 0;
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 9px;
   font-size: 13px;
   color: #77766f;
   letter-spacing: -.3px;
+  z-index: 20;
 }
 
 #totalReps {
@@ -356,12 +364,8 @@ button:active {
   </div>
 
   <div class="map-info">
-    <span>MAP✶PROGRESS</span>
-    <span class="map-progress-value">
-      <button class="reroll-map" id="rerollLargest" type="button" aria-label="Сменить самый большой контур" title="Сменить самый большой контур">⚄</button>
-      <button class="reroll-map" id="rerollLargestAgain" type="button" aria-label="Ещё один вариант контура" title="Ещё один вариант контура">⚄</button>
-      <span id="mapPercent">0%</span>
-    </span>
+    <span>MAP✶PROGRESS <span id="mapPercent">0%</span></span>
+    <button class="reroll-map" id="rerollLargest" type="button" aria-label="Сменить самый большой контур" title="Сменить самый большой контур">⚄</button>
   </div>
 
   <div id="maps"></div>
@@ -915,7 +919,7 @@ function rerollLargestMap() {
 }
 
 document.getElementById("rerollLargest").onclick = rerollLargestMap;
-document.getElementById("rerollLargestAgain").onclick = rerollLargestMap;
+
 
 
 /* ПОВТОРЕНИЯ */
