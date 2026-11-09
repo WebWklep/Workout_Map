@@ -306,8 +306,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 30px;
-  width: 104%;
-  margin-left: -2%;
+  width: 112%;
+  margin-left: -6%;
 }
 
 .map {
@@ -336,6 +336,22 @@ button {
 
 /* Рваная графитовая кромка — будто слой земли слегка выступает из-под сетки */
 .earth-dust { display: none; }
+
+/* Клетка немного крупнее, чтобы по ней было удобнее попадать */
+#maps { touch-action: pan-y; }
+
+/* Чёрная заливка плавно растворяется, открывая спутниковый рельеф */
+.terrain-reveal {
+  fill: #292826;
+  opacity: 1;
+  pointer-events: none;
+  animation: terrainUncover .72s cubic-bezier(.2,.65,.25,1) forwards;
+}
+@keyframes terrainUncover {
+  0% { opacity: 1; }
+  28% { opacity: .94; }
+  100% { opacity: 0; }
+}
 
 /* Мягкое появление заполненной клетки */
 .cell.cell-pop {
@@ -1166,7 +1182,19 @@ function addRep(mapIndex,cellIndex) {
       "class",
       cell[2] ? "cell filled cell-pop" : "cell"
     );
-    rect.style.filter = cell[2] ? `url(#earthTexture-${mapIndex})` : "";
+    rect.style.fill = cell[2] ? `url(#terrainPattern-${mapIndex})` : "transparent";
+    rect.style.filter = "";
+    if (cell[2]) {
+      // Чёрная поверхность растворяется, открывая рельеф под ней.
+      const reveal = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      reveal.setAttribute("x",cell[0]*CELL);
+      reveal.setAttribute("y",cell[1]*CELL);
+      reveal.setAttribute("width",CELL);
+      reveal.setAttribute("height",CELL);
+      reveal.setAttribute("class","terrain-reveal");
+      svg.appendChild(reveal);
+      reveal.addEventListener("animationend",()=>reveal.remove(),{once:true});
+    }
   }
 
   if (cell[2]) playTone(520, .045, .016);
