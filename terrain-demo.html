@@ -131,9 +131,14 @@ const cellGroup=new THREE.Group();scene.add(cellGroup);
 const cells=[];
 for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
   const x=-W/2+(c+.5)*W/COLS,y=-H/2+(r+.5)*H/ROWS;
-  const z=sampleHeight(x,y)+.07;
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(W/COLS-.025,H/ROWS-.025),new THREE.MeshBasicMaterial({color:0x252421,transparent:true,opacity:.94,side:THREE.DoubleSide}));
-  mesh.position.set(x,y,z);mesh.rotation.x=0;mesh.userData.index=r*COLS+c;
+  const cellGeo=new THREE.PlaneGeometry(W/COLS-.025,H/ROWS-.025,4,4);
+  const cellPos=cellGeo.attributes.position;
+  for(let k=0;k<cellPos.count;k++){
+    cellPos.setZ(k,sampleHeight(x+cellPos.getX(k),y+cellPos.getY(k))+.065);
+  }
+  cellGeo.computeVertexNormals();
+  const mesh=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0x252421,transparent:true,opacity:.94,side:THREE.DoubleSide}));
+  mesh.position.set(x,y,0);mesh.userData.index=r*COLS+c;
   cellGroup.add(mesh);cells.push(mesh);
 }
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
