@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f4f3ef">
+<title>CLAIM BY POWER — Terrain Lab</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f3ef;color:#292824;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+  #stage{position:fixed;inset:0;touch-action:pan-y}
+  canvas{display:block;width:100%;height:100%;touch-action:pan-y}
+  .top{position:fixed;top:max(22px,env(safe-area-inset-top));left:22px;right:22px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+  .brand{font-size:21px;line-height:.9;font-weight:750;letter-spacing:-.07em}
+  .brand small{display:block;margin-top:6px;font-size:8px;letter-spacing:.32em;color:#77756e}
+  .tag{font-size:8px;letter-spacing:.18em;color:#77756e}
+  .bottom{position:fixed;left:22px;right:22px;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+  .caption{font-size:9px;letter-spacing:.16em;color:#77756e;line-height:1.6}
+  .count{font-size:20px;letter-spacing:.04em;font-weight:600}
+  .hint{position:fixed;left:50%;bottom:max(62px,calc(env(safe-area-inset-bottom) + 62px));transform:translateX(-50%);font-size:8px;letter-spacing:.12em;color:#96938b;white-space:nowrap;pointer-events:none}
+  #error{position:fixed;inset:auto 18px 100px;padding:12px;background:#fff;border:1px solid #ddd;display:none;font-size:12px}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div class="top"><div class="brand">CLAIM<small>BY POWER</small></div><div class="tag">TERRAIN LAB / 01</div></div>
+<div class="hint">TAP CELLS TO REVEAL THE TERRAIN</div>
+<div class="bottom"><div class="caption">HEIGHTFIELD STUDY<br>WEBGL / REAL-TIME LIGHT</div><div class="count" id="count">000</div></div>
+<div id="error"></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
+
+const stage=document.querySelector('#stage');
+const errorBox=document.querySelector('#error');
+const COLS=18, ROWS=22, W=18, H=22;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xf4f3ef);
+const camera=new THREE.PerspectiveCamera(34,innerWidth/innerHeight,.1,100);
+camera.position.set(0,-5.4,34);
+camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.18;
+stage.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x34322e,2.0));
+const key=new THREE.DirectionalLight(0xffffff,3.2);
+key.position.set(-10,-7,18);scene.add(key);
+const fill=new THREE.DirectionalLight(0xb9b7b0,1.05);
+fill.position.set(9,8,9);scene.add(fill);
+
+function hash(x,y){let n=Math.sin(x*127.1+y*311.7+19.19)*43758.5453;return n-Math.floor(n)}
+function smooth(t){return t*t*(3-2*t)}
+function noise(x,y){
+  const ix=Math.floor(x),iy=Math.floor(y),fx=smooth(x-ix),fy=smooth(y-iy);
+  const a=hash(ix,iy),b=hash(ix+1,iy),c=hash(ix,iy+1),d=hash(ix+1,iy+1);
+  return (a+(b-a)*fx)+((c+(d-c)*fx)-(a+(b-a)*fx))*fy;
+}
+function fbm(x,y){
+  let sum=0,amp=.55,norm=0;
+  for(let i=0;i<5;i++){sum+=(noise(x,y)*2-1)*amp;norm+=amp;x*=2.03;y*=2.03;amp*=.5}
+  return sum/norm;
+}
+function heightAt(x,y){
+  // Large continental folds first; finer detail is deliberately restrained.
+  const broad=fbm(x*.20+4,y*.20-2);
+  const ridge=1-Math.abs(fbm(x*.34-7,y*.34+3));
+  const fold=fbm(x*.105-11,y*.105+8);
+  const detail=fbm(x*.82+20,y*.82-14);
+  const basin=Math.max(0,1-Math.hypot((x-.15)*.82,(y+.35)*.63));
+  return broad*1.12 + (ridge-.48)*.78 + fold*.72 + detail*.095 + basin*.24;
+}
+const NX=180, NY=220;
+const positions=[],colors=[],indices=[];
+let min=Infinity,max=-Infinity;
+const heights=new Float32Array((NX+1)*(NY+1));
+for(let j=0;j<=NY;j++)for(let i=0;i<=NX;i++){
+  const x=(i/NX-.5)*W,y=(.5-j/NY)*H;
+  const z=heightAt(x,y);
+  heights[j*(NX+1)+i]=z;min=Math.min(min,z);max=Math.max(max,z);
+  positions.push(x,y,z);
+}
+for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){
+  const a=j*(NX+1)+i,b=a+1,c=a+NX+1,d=c+1;
+  indices.push(a,c,b,b,c,d);
+}
+const geometry=new THREE.BufferGeometry();
+geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+geometry.setIndex(indices);
+geometry.computeVertexNormals();
+const pos=geometry.attributes.position,normals=geometry.attributes.normal;
+for(let i=0;i<pos.count;i++){
+  const z=(pos.getZ(i)-min)/(max-min);
+  const slope=1-Math.max(0,normals.getZ(i));
+  const shade=.24+z*.42+slope*.13;
+  colors.push(shade,shade,shade*.97);
+}
+geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+const terrain=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+  vertexColors:true,roughness:1,metalness:0,flatShading:false
+}));
+scene.add(terrain);
+
+// Subtle square lattice follows the heightfield instead of floating above a flat plane.
+function sampleHeight(x,y){return heightAt(x,y)+.035}
+const gridPositions=[];
+for(let c=0;c<=COLS;c++){
+  const x=-W/2+c*W/COLS;
+  for(let r=0;r<ROWS;r++){
+    const y1=-H/2+r*H/ROWS,y2=y1+H/ROWS;
+    gridPositions.push(x,y1,sampleHeight(x,y1),x,y2,sampleHeight(x,y2));
+  }
+}
+for(let r=0;r<=ROWS;r++){
+  const y=-H/2+r*H/ROWS;
+  for(let c=0;c<COLS;c++){
+    const x1=-W/2+c*W/COLS,x2=x1+W/COLS;
+    gridPositions.push(x1,y,sampleHeight(x1,y),x2,y,sampleHeight(x2,y));
+  }
+}
+const gridGeo=new THREE.BufferGeometry();
+gridGeo.setAttribute('position',new THREE.Float32BufferAttribute(gridPositions,3));
+const grid=new THREE.LineSegments(gridGeo,new THREE.LineBasicMaterial({color:0x242320,transparent:true,opacity:.24}));
+scene.add(grid);
+
+// Dark unrevealed cells sit just above the same terrain surface.
+const cellGroup=new THREE.Group();scene.add(cellGroup);
+const cells=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  const x=-W/2+(c+.5)*W/COLS,y=-H/2+(r+.5)*H/ROWS;
+  const cellGeo=new THREE.PlaneGeometry(W/COLS-.025,H/ROWS-.025,4,4);
+  const cellPos=cellGeo.attributes.position;
+  for(let k=0;k<cellPos.count;k++){
+    cellPos.setZ(k,sampleHeight(x+cellPos.getX(k),y+cellPos.getY(k))+.065);
+  }
+  cellGeo.computeVertexNormals();
+  const mesh=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0x252421,transparent:true,opacity:.94,side:THREE.DoubleSide}));
+  mesh.position.set(x,y,0);mesh.userData.index=r*COLS+c;
+  cellGroup.add(mesh);cells.push(mesh);
+}
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+let total=0;
+renderer.domElement.addEventListener('pointerdown',e=>{
+  const rect=renderer.domElement.getBoundingClientRect();
+  pointer.set((e.clientX-rect.left)/rect.width*2-1,-((e.clientY-rect.top)/rect.height*2-1));
+  raycaster.setFromCamera(pointer,camera);
+  const hits=raycaster.intersectObjects(cells,false);
+  if(!hits.length)return;
+  const m=hits[0].object,was=m.visible;
+  m.visible=!was;total+=was?1:-1;
+  document.querySelector('#count').textContent=String(total).padStart(3,'0');
+});
+
+function resize(){
+  camera.aspect=innerWidth/innerHeight;
+  camera.position.z=innerWidth<600?39:34;
+  camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
+}
+addEventListener('resize',resize);
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)}
+animate();
+</script>
+</body>
+</html>
