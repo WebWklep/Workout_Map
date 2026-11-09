@@ -47,7 +47,7 @@ body::after {
   inset: 0;
   z-index: 30;
   pointer-events: none;
-  opacity: .105;
+  opacity: .065;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='.34'/%3E%3C/svg%3E");
   background-size: 180px 180px;
@@ -106,9 +106,10 @@ button {
   display: grid;
   grid-template-columns: minmax(0,1fr) auto 38px;
   align-items: center;
-  gap: 8px;
-  padding: 1px 0;
+  gap: 6px;
+  padding: 0;
   border-bottom: 0;
+  line-height: 1.05;
 }
 
 .exercise-name {
@@ -116,6 +117,8 @@ button {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: -.25px;
+  line-height: 1.05;
+  text-transform: uppercase;
   text-align: left;
   overflow-wrap: anywhere;
   padding: 5px 0;
@@ -297,6 +300,19 @@ button {
 
 .cell.filled {
   fill: var(--cell);
+  filter: url(#earthTexture);
+}
+
+/* Едва заметный ореол пыли по краю открытой формы */
+.earth-dust {
+  fill: none;
+  stroke: #77746e;
+  stroke-width: 5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: .2;
+  filter: url(#dustSoft);
+  pointer-events: none;
 }
 
 /* Мягкое появление заполненной клетки */
@@ -875,6 +891,22 @@ function renderWorkout() {
 
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
+    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+    defs.innerHTML = `
+      <filter id="earthTexture" x="-12%" y="-12%" width="124%" height="124%">
+        <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="8" result="grain"/>
+        <feColorMatrix in="grain" type="saturate" values="0" result="monoGrain"/>
+        <feComponentTransfer in="monoGrain" result="softGrain">
+          <feFuncA type="table" tableValues="0 .19"/>
+        </feComponentTransfer>
+        <feBlend in="SourceGraphic" in2="softGrain" mode="multiply"/>
+      </filter>
+      <filter id="dustSoft" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="2.2"/>
+      </filter>
+    `;
+    svg.appendChild(defs);
+
     map.cells.forEach((cell,i)=>{
 
       const rect = document.createElementNS(
@@ -905,6 +937,9 @@ function renderWorkout() {
     outline.setAttribute("d",makeOutline(map.cells));
     outline.setAttribute("class","outline");
 
+    const dust = outline.cloneNode();
+    dust.setAttribute("class","earth-dust");
+    svg.appendChild(dust);
     svg.appendChild(outline);
 
     // Определяем ячейку по координатам касания, а не по event.target.
