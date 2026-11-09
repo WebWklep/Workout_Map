@@ -356,6 +356,7 @@ button {
 
 .cell {
   fill: transparent;
+  transition: fill .58s cubic-bezier(.22,.7,.2,1);
 }
 
 .cell.filled {
@@ -1163,7 +1164,10 @@ function addRep(mapIndex,cellIndex) {
   );
 
   if (rect && svg) {
-    // Полупрозрачное мягкое пятно появляется в центре клетки и растворяется.
+    // Сначала меняем состояние самой клетки: чернила остаются в ней,
+    // а мягкое пятно поверх лишь сопровождает касание.
+    rect.classList.toggle("filled",cell[2]);
+
     const ink = document.createElementNS("http://www.w3.org/2000/svg","circle");
     ink.setAttribute("cx",cell[0]*CELL + CELL/2);
     ink.setAttribute("cy",cell[1]*CELL + CELL/2);
