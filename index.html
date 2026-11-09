@@ -332,18 +332,16 @@ button {
 
 .cell.filled {
   fill: var(--cell);
-  filter: url(#earthTexture);
 }
 
-/* Едва заметный ореол пыли по краю открытой формы */
+/* Рваная графитовая кромка — будто слой земли слегка выступает из-под сетки */
 .earth-dust {
   fill: none;
-  stroke: #77746e;
-  stroke-width: 5;
+  stroke: #55534f;
+  stroke-width: 4.2;
   stroke-linejoin: round;
   stroke-linecap: round;
-  opacity: .2;
-  filter: url(#dustSoft);
+  opacity: .27;
   pointer-events: none;
 }
 
@@ -927,17 +925,22 @@ function renderWorkout() {
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
     const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+    const earthFilterId = `earthTexture-${mapIndex}`;
+    const dustFilterId = `dustRough-${mapIndex}`;
     defs.innerHTML = `
-      <filter id="earthTexture" x="-12%" y="-12%" width="124%" height="124%">
-        <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="8" result="grain"/>
-        <feColorMatrix in="grain" type="saturate" values="0" result="monoGrain"/>
-        <feComponentTransfer in="monoGrain" result="softGrain">
-          <feFuncA type="table" tableValues="0 .19"/>
+      <filter id="${earthFilterId}" x="-18%" y="-18%" width="136%" height="136%">
+        <feTurbulence type="fractalNoise" baseFrequency=".62" numOctaves="3" seed="8" result="earthGrain"/>
+        <feColorMatrix in="earthGrain" type="saturate" values="0" result="monoGrain"/>
+        <feComponentTransfer in="monoGrain" result="grainContrast">
+          <feFuncA type="table" tableValues=".08 .42"/>
         </feComponentTransfer>
-        <feBlend in="SourceGraphic" in2="softGrain" mode="multiply"/>
+        <feDisplacementMap in="SourceGraphic" in2="monoGrain" scale="1.15" xChannelSelector="R" yChannelSelector="G" result="roughInk"/>
+        <feBlend in="roughInk" in2="grainContrast" mode="multiply"/>
       </filter>
-      <filter id="dustSoft" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="2.2"/>
+      <filter id="${dustFilterId}" x="-35%" y="-35%" width="170%" height="170%">
+        <feTurbulence type="fractalNoise" baseFrequency=".085" numOctaves="2" seed="13" result="edgeNoise"/>
+        <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="5.5" xChannelSelector="R" yChannelSelector="G" result="tornEdge"/>
+        <feGaussianBlur in="tornEdge" stdDeviation=".55"/>
       </filter>
     `;
     svg.appendChild(defs);
@@ -958,6 +961,7 @@ function renderWorkout() {
         "class",
         cell[2]?"cell filled":"cell"
       );
+      if (cell[2]) rect.style.filter = `url(#${earthFilterId})`;
 
       rect.dataset.cell = i;
 
@@ -974,6 +978,7 @@ function renderWorkout() {
 
     const dust = outline.cloneNode();
     dust.setAttribute("class","earth-dust");
+    dust.style.filter = `url(#${dustFilterId})`;
     svg.appendChild(dust);
     svg.appendChild(outline);
 
@@ -1118,6 +1123,7 @@ function addRep(mapIndex,cellIndex) {
       "class",
       cell[2] ? "cell filled cell-pop" : "cell"
     );
+    rect.style.filter = cell[2] ? `url(#earthTexture-${mapIndex})` : "";
   }
 
   if (cell[2]) playTone(520, .045, .016);
