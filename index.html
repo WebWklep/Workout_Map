@@ -267,7 +267,7 @@ button {
 
 .map-header {
   display: grid;
-  grid-template-columns: 44px minmax(0,1fr) 44px;
+  grid-template-columns: minmax(0,1fr) 44px;
   align-items: center;
   gap: 0;
   margin: 0 13px 28px;
@@ -291,9 +291,9 @@ button {
   overflow-wrap: anywhere;
   text-shadow: none;
   min-width: 0;
-  text-align: center;
+  text-align: left;
   line-height: 1;
-  padding: 0 5px;
+  padding: 0;
 }
 
 .map-info {
@@ -420,9 +420,10 @@ button {
 
 .footer {
   position: fixed;
-  right: 13px;
+  position: fixed;
+  right: 16px;
   left: auto;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  bottom: calc(env(safe-area-inset-bottom) + 16px);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -434,7 +435,7 @@ button {
   font-weight: 400;
   color: #fff;
   letter-spacing: .02em;
-  z-index: 20;
+  z-index: 100;
   mix-blend-mode: difference;
   pointer-events: none;
 }
@@ -478,7 +479,6 @@ button:active {
 <section id="workout" class="hidden">
 
   <div class="map-header">
-    <button class="back" id="back" type="button">←</button>
     <span class="map-title" id="mapTitle"></span>
     <button class="edit-title" id="editTitle" type="button" aria-label="Изменить название">✎</button>
   </div>
