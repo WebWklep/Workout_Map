@@ -362,19 +362,34 @@ button {
   fill: var(--cell);
 }
 
-/* Мягкая тёмная «вмятина» в центре касания — без контура и без изменения геометрии. */
-.cell-dimple {
+/* Чернила сначала собираются в точке касания, затем мягко расплываются
+   и впитываются в клетку, не меняя её геометрию. */
+.cell-ink {
   pointer-events: none;
   fill: url(#pressGradient);
-  filter: blur(1.1px);
+  filter: blur(1.8px);
   transform-box: fill-box;
   transform-origin: center;
-  animation: dimpleFade .46s ease-out forwards;
+  animation: inkAbsorb .72s cubic-bezier(.18,.62,.32,1) forwards;
 }
 
-@keyframes dimpleFade {
-  0% { opacity: .9; }
-  100% { opacity: 0; }
+@keyframes inkAbsorb {
+  0% {
+    opacity: 0;
+    transform: scale(.12);
+  }
+  16% {
+    opacity: .88;
+    transform: scale(.42);
+  }
+  48% {
+    opacity: .62;
+    transform: scale(.88);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
 }
 
 /* Тихая смена цифр без скачка интерфейса */
@@ -389,7 +404,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell-dimple,
+  .cell-ink,
   .count-change {
     animation: none !important;
   }
@@ -964,9 +979,13 @@ function renderWorkout() {
     const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
     const gradient = document.createElementNS("http://www.w3.org/2000/svg","radialGradient");
     gradient.setAttribute("id","pressGradient");
+    gradient.setAttribute("cx","50%");
+    gradient.setAttribute("cy","50%");
+    gradient.setAttribute("r","50%");
     gradient.innerHTML = `
-      <stop offset="0%" stop-color="#24231f" stop-opacity=".34"/>
-      <stop offset="48%" stop-color="#24231f" stop-opacity=".16"/>
+      <stop offset="0%" stop-color="#24231f" stop-opacity=".43"/>
+      <stop offset="30%" stop-color="#24231f" stop-opacity=".29"/>
+      <stop offset="68%" stop-color="#24231f" stop-opacity=".10"/>
       <stop offset="100%" stop-color="#24231f" stop-opacity="0"/>
     `;
     defs.appendChild(gradient);
@@ -1145,14 +1164,14 @@ function addRep(mapIndex,cellIndex) {
 
   if (rect && svg) {
     // Полупрозрачное мягкое пятно появляется в центре клетки и растворяется.
-    const dimple = document.createElementNS("http://www.w3.org/2000/svg","circle");
-    dimple.setAttribute("cx",cell[0]*CELL + CELL/2);
-    dimple.setAttribute("cy",cell[1]*CELL + CELL/2);
-    dimple.setAttribute("r",CELL*.53);
-    dimple.setAttribute("class","cell-dimple");
-    svg.appendChild(dimple);
-    dimple.addEventListener("animationend",()=>dimple.remove(),{once:true});
-    window.setTimeout(()=>dimple.remove(),520);
+    const ink = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    ink.setAttribute("cx",cell[0]*CELL + CELL/2);
+    ink.setAttribute("cy",cell[1]*CELL + CELL/2);
+    ink.setAttribute("r",CELL*.72);
+    ink.setAttribute("class","cell-ink");
+    svg.appendChild(ink);
+    ink.addEventListener("animationend",()=>ink.remove(),{once:true});
+    window.setTimeout(()=>ink.remove(),780);
   }
 
   if (cell[2]) playTone(520, .045, .016);
