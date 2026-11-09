@@ -485,9 +485,9 @@ button:active {
 <script>
 (() => {
 
-const COLS = 22;
-const ROWS = 28;
-const CELL = 18;
+const COLS = 18;
+const ROWS = 22;
+const CELL = 24;
 
 const W = COLS * CELL;
 const H = ROWS * CELL;
@@ -583,8 +583,8 @@ function randomIsland() {
   const horizontal = Math.cos(angle);
   const vertical = Math.sin(angle);
 
-  const centerX = 10.5;
-  const centerY = 13.5;
+  const centerX = (COLS-1)/2;
+  const centerY = (ROWS-1)/2;
 
   // Создание отдельных массивов
 
@@ -592,21 +592,21 @@ function randomIsland() {
 
     let t = count === 1 ? 0 : (i/(count-1)-.5);
 
-    let x = centerX + horizontal*t*11;
-    let y = centerY + vertical*t*15;
+    let x = centerX + horizontal*t*8.5;
+    let y = centerY + vertical*t*10.5;
 
     if (mode === 5) {
-      x += rand(-5,5);
+      x += rand(-3.5,3.5);
       y += rand(-5,5);
     }
 
     if (mode === 6) {
       x += rand(-3,3);
-      y += rand(-7,7);
+      y += rand(-4.5,4.5);
     }
 
-    const rx = rand(3.5,7.5);
-    const ry = rand(3.5,8.5);
+    const rx = rand(3.1,6.2);
+    const ry = rand(3.1,7.1);
 
     blobs.push({
       x,
@@ -669,7 +669,7 @@ function randomIsland() {
       const across = -dx*vertical + dy*horizontal;
 
       if (
-        Math.abs(along)<10 &&
+        Math.abs(along)<7.8 &&
         Math.abs(across)<1.25
       ) {
         result = true;
@@ -704,7 +704,7 @@ function randomIsland() {
 
   // Защита от слишком маленькой карты
 
-  if (cells.length < 45) {
+  if (cells.length < 30) {
     return randomIsland();
   }
 
@@ -1277,6 +1277,27 @@ if (!state.exercises.length) {
   } catch(e) {}
 }
 
+
+/* МИГРАЦИЯ СЕТКИ: уменьшаем число ячеек, сохраняя расположение и отметки */
+if (state.gridVersion !== 2) {
+  for (const exercise of state.exercises) {
+    for (const map of (exercise.maps || [])) {
+      const remapped = new Map();
+      for (const cell of (map.cells || [])) {
+        const x = Math.max(0,Math.min(COLS-1,Math.round(cell[0] * (COLS-1) / 21)));
+        const y = Math.max(0,Math.min(ROWS-1,Math.round(cell[1] * (ROWS-1) / 27)));
+        const key = x + "," + y;
+        if (!remapped.has(key)) remapped.set(key,[x,y,!!cell[2]]);
+        else if (cell[2]) remapped.get(key)[2] = true;
+      }
+      map.cells = [...remapped.values()];
+    }
+    exercise.reps = (exercise.maps || []).reduce(
+      (sum,map)=>sum+(map.cells || []).filter(cell=>cell[2]).length,0
+    );
+  }
+  state.gridVersion = 2;
+}
 
 /* ЗАПУСК */
 
