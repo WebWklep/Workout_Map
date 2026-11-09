@@ -445,7 +445,7 @@ button:active {
   opacity: .65;
 }
 
-/* CLAIM BY POWER — приборная шкала и мягкое сейсмическое событие */
+/* CLAIM BY POWER — компактная приборная шкала */
 .footer {
   left: auto;
   right: 14px;
@@ -484,56 +484,6 @@ button:active {
   letter-spacing: .04em;
   color: #393833;
 }
-.reroll-map {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 112px;
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid rgba(62,60,55,.24);
-  border-radius: 2px;
-  background: transparent;
-  color: #55524c;
-  font-size: 8px;
-  font-weight: 650;
-  letter-spacing: .12em;
-  line-height: 1;
-  white-space: nowrap;
-}
-.reroll-map::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background: #59564f;
-  box-shadow: 0 0 0 2px rgba(89,86,79,.12);
-}
-.reroll-map:active { background: rgba(40,39,36,.08); opacity: 1; }
-.map.quake-active svg {
-  animation: terrainQuake .72s cubic-bezier(.22,.7,.25,1);
-  transform-origin: 50% 50%;
-}
-@keyframes terrainQuake {
-  0% { transform: translate3d(0,0,0); }
-  12% { transform: translate3d(-1.5px,.7px,0); }
-  24% { transform: translate3d(1.4px,-.8px,0); }
-  38% { transform: translate3d(-.8px,.4px,0); }
-  52% { transform: translate3d(.6px,-.3px,0); }
-  70%,100% { transform: translate3d(0,0,0); }
-}
-.quake-wave {
-  fill: none;
-  stroke: rgba(40,39,36,.42);
-  stroke-width: 1.15;
-  vector-effect: non-scaling-stroke;
-  pointer-events: none;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: quakeWave 1.15s ease-out forwards;
-}
-@keyframes quakeWave {
   0% { opacity: 0; transform: scale(.06); stroke-width: 2; }
   12% { opacity: .65; }
   100% { opacity: 0; transform: scale(1.18); stroke-width: .25; }
@@ -572,7 +522,6 @@ button:active {
 
   <div class="map-info">
     <span>MAP✶PROGRESS <span id="mapPercent">0%</span></span>
-    <button class="reroll-map" id="powerEarthquake" type="button" aria-label="Запустить Power Earthquake" title="Power Earthquake">POWER EARTHQUAKE</button>
   </div>
 
   <div id="maps"></div>
@@ -1097,10 +1046,10 @@ function makeTerrainTexture(seed = 9137) {
     const ao=Math.max(-.18,Math.min(.18,curvature));
     const slope=Math.hypot(dx,dy);
     const relief=diffuse*.78+nz*.16+ao;
-    let value=88+relief*104+(h-.24)*30-Math.min(22,slope*3.1);
-    // Более графитовая поверхность: тёмные склоны, сдержанные вершины.
-    value=Math.max(18,Math.min(198,value));
-    value=(value-108)*1.32+108;
+    let value=66+relief*96+(h-.24)*28-Math.min(24,slope*3.4);
+    // Более глубокая графитовая тональность с сохранением читаемых склонов.
+    value=Math.max(12,Math.min(172,value));
+    value=(value-92)*1.38+92;
     const i=(y*TW+x)*4;
     image.data[i]=value;
     image.data[i+1]=value;
@@ -1242,36 +1191,6 @@ function renderWorkout() {
 
   updateInfo();
 }
-
-
-/* POWER EARTHQUAKE — визуальная сейсмическая волна.
-   Не меняет геометрию карты, отметки или сохранённый прогресс. */
-function powerEarthquake() {
-  const sections = [...mapsEl.querySelectorAll(".map")];
-  if (!sections.length) return;
-
-  sections.forEach(section => {
-    section.classList.remove("quake-active");
-    void section.offsetWidth;
-    section.classList.add("quake-active");
-
-    const svg = section.querySelector("svg");
-    if (!svg) return;
-
-    const wave = document.createElementNS("http://www.w3.org/2000/svg","ellipse");
-    wave.setAttribute("class","quake-wave");
-    wave.setAttribute("cx",W/2);
-    wave.setAttribute("cy",H/2);
-    wave.setAttribute("rx",W*.34);
-    wave.setAttribute("ry",H*.34);
-    svg.appendChild(wave);
-    wave.addEventListener("animationend",()=>wave.remove(),{once:true});
-    window.setTimeout(()=>section.classList.remove("quake-active"),850);
-  });
-
-  playTone(115, .16, .012);
-}
-document.getElementById("powerEarthquake").onclick = powerEarthquake;
 
 
 /* ПОВТОРЕНИЯ */
