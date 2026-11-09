@@ -340,27 +340,7 @@ button {
 /* Клетка немного крупнее, чтобы по ней было удобнее попадать */
 #maps { touch-action: pan-y; }
 
-/* Чёрная заливка плавно растворяется, открывая спутниковый рельеф */
-.terrain-reveal {
-  fill: #292826;
-  opacity: 1;
-  pointer-events: none;
-  animation: terrainUncover .72s cubic-bezier(.2,.65,.25,1) forwards;
-}
-.terrain-hide {
-  animation: terrainFadeOut .62s cubic-bezier(.35,0,.7,.35) forwards;
-  pointer-events: none;
-}
-@keyframes terrainFadeOut {
-  0% { opacity: 1; filter: brightness(1); }
-  55% { opacity: .58; filter: brightness(1.35); }
-  100% { opacity: 0; filter: brightness(1.8); }
-}
-@keyframes terrainUncover {
-  0% { opacity: 1; }
-  28% { opacity: .94; }
-  100% { opacity: 0; }
-}
+/* Однотонные клетки без тяжёлой текстуры и фильтров. */
 
 /* Мягкое появление заполненной клетки */
 .cell.cell-pop {
@@ -959,109 +939,7 @@ document.getElementById("back").onclick = ()=>{
 };
 
 
-/* ПРОЦЕДУРНЫЙ РЕЛЬЕФ: непрерывная высотная карта с имитацией спутникового hillshade */
-function makeTerrainTexture(seed = 9137) {
-  // Непрерывная высотная модель. Геометрию не рисуем треугольниками:
-  // вычисляем гладкие нормали по соседним высотам — так исчезает low-poly рисунок.
-  const SCALE=1.5;
-  const TW=Math.round(W*SCALE), TH=Math.round(H*SCALE);
-  const canvas=document.createElement("canvas");
-  canvas.width=TW; canvas.height=TH;
-  const ctx=canvas.getContext("2d",{alpha:false});
-
-  function hash(ix,iy) {
-    let n=Math.imul(ix|0,374761393)+Math.imul(iy|0,668265263)+Math.imul(seed|0,1442695041);
-    n=Math.imul(n^(n>>>13),1274126177);
-    return ((n^(n>>>16))>>>0)/4294967295;
-  }
-  function fade(t) { return t*t*t*(t*(t*6-15)+10); }
-  function noise(x,y) {
-    const ix=Math.floor(x),iy=Math.floor(y),fx=fade(x-ix),fy=fade(y-iy);
-    const a=hash(ix,iy),b=hash(ix+1,iy),c=hash(ix,iy+1),d=hash(ix+1,iy+1);
-    const u=a+(b-a)*fx,v=c+(d-c)*fx;
-    return u+(v-u)*fy;
-  }
-  function fbm(x,y) {
-    return noise(x,y)*.52+noise(x*2.03+13,y*2.03-7)*.27+
-           noise(x*4.07-19,y*4.07+5)*.14+noise(x*8.11+3,y*8.11+17)*.07;
-  }
-  function ridged(x,y) {
-    const n=fbm(x,y)*2-1;
-    return 1-Math.abs(n);
-  }
-  function heightAt(x,y) {
-    // Медленная деформация координат ломает искусственные параллельные полосы.
-    const warpX=(fbm(x/155+4,y/155+11)-.5)*.9;
-    const warpY=(fbm(x/170+21,y/170-3)-.5)*.9;
-    const u=x/58+warpX, v=y/58+warpY;
-
-    // Несколько крупных массивов с неровными границами.
-    const m1=Math.exp(-(((x-W*.23)/ (W*.27))**2+((y-H*.30)/(H*.23))**2)*1.25);
-    const m2=Math.exp(-(((x-W*.72)/(W*.31))**2+((y-H*.59)/(H*.29))**2)*1.15);
-    const m3=Math.exp(-(((x-W*.42)/(W*.22))**2+((y-H*.88)/(H*.19))**2)*1.35);
-    const mass=Math.max(m1*.95,m2*.88,m3*.72);
-
-    // Изломанные хребты и ветвящиеся складки, без повторяющихся синусоид.
-    const ridgeA=Math.pow(ridged(u,v),2.15);
-    const ridgeB=Math.pow(ridged(x/29+warpX*1.7+8,y/31+warpY*1.7-5),2.7);
-    const broad=fbm(x/210+31,y/210-17);
-    const detail=fbm(x/18+7,y/19+29);
-    const erosion=fbm(x/10-12,y/12+3);
-    const plateau=Math.max(0,1-Math.abs(fbm(x/92+17,y/87-8)*2-1));
-    let h=.055+mass*(.17+ridgeA*.46+ridgeB*.13+plateau*.12);
-    h+=(broad-.5)*.075+(detail-.5)*.075+(erosion-.5)*.026;
-    // Небольшие долины вырезаются из склонов, а не накладываются шумом сверху.
-    const channels=Math.pow(Math.max(0,1-ridged(x/38+warpX*2-14,y/42+warpY*2+9)),5);
-    h-=channels*mass*.075;
-    return Math.max(0,Math.min(1,h));
-  }
-
-  const heights=new Float32Array(TW*TH);
-  for(let y=0;y<TH;y++) for(let x=0;x<TW;x++) {
-    heights[y*TW+x]=heightAt(x/SCALE,y/SCALE);
-  }
-
-  const image=ctx.createImageData(TW,TH);
-  const lightX=-.48,lightY=-.58,lightZ=.66;
-  const lightLen=Math.hypot(lightX,lightY,lightZ);
-  const lx=lightX/lightLen,ly=lightY/lightLen,lz=lightZ/lightLen;
-  const at=(x,y)=>heights[Math.max(0,Math.min(TH-1,y))*TW+Math.max(0,Math.min(TW-1,x))];
-  for(let y=0;y<TH;y++) for(let x=0;x<TW;x++) {
-    const h=at(x,y);
-    // Центральные разности дают плавные нормали по всей поверхности.
-    const dx=(at(x+1,y)-at(x-1,y))*78;
-    const dy=(at(x,y+1)-at(x,y-1))*78;
-    let nx=-dx,ny=-dy,nz=1;
-    const nl=Math.hypot(nx,ny,nz); nx/=nl; ny/=nl; nz/=nl;
-    const diffuse=Math.max(0,nx*lx+ny*ly+nz*lz);
-
-    // Мягкое локальное затенение впадин и небольшая подсветка гребней.
-    const around=(at(x-3,y)+at(x+3,y)+at(x,y-3)+at(x,y+3))*.25;
-    const curvature=(around-h)*105;
-    const ao=Math.max(-.18,Math.min(.18,curvature));
-    const slope=Math.hypot(dx,dy);
-    const relief=diffuse*.78+nz*.16+ao;
-    let value=66+relief*96+(h-.24)*28-Math.min(24,slope*3.4);
-    // Более глубокая графитовая тональность с сохранением читаемых склонов.
-    value=Math.max(12,Math.min(172,value));
-    value=(value-92)*1.38+92;
-    const i=(y*TW+x)*4;
-    image.data[i]=value;
-    image.data[i+1]=value;
-    image.data[i+2]=value;
-    image.data[i+3]=255;
-  }
-  ctx.putImageData(image,0,0);
-
-  // Едва заметная атмосферная вуаль; никаких крупных зернистых пятен.
-  const haze=ctx.createLinearGradient(0,0,TW,TH);
-  haze.addColorStop(0,"rgba(255,255,255,.09)");
-  haze.addColorStop(.55,"rgba(255,255,255,0)");
-  haze.addColorStop(1,"rgba(25,25,25,.055)");
-  ctx.fillStyle=haze;
-  ctx.fillRect(0,0,TW,TH);
-  return canvas.toDataURL("image/png");
-}
+/* РЕЛЬЕФ ВРЕМЕННО ОТКЛЮЧЁН: используем лёгкие однотонные клетки. */
 
 /* ОТРИСОВКА КАРТ */
 
@@ -1085,26 +963,6 @@ function renderWorkout() {
 
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
-    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
-    const terrainPatternId = `terrainPattern-${mapIndex}`;
-    const terrainUrl = makeTerrainTexture(9137 + mapIndex * 7919);
-    const pattern = document.createElementNS("http://www.w3.org/2000/svg","pattern");
-    pattern.setAttribute("id",terrainPatternId);
-    pattern.setAttribute("patternUnits","userSpaceOnUse");
-    pattern.setAttribute("x","0");
-    pattern.setAttribute("y","0");
-    pattern.setAttribute("width",W);
-    pattern.setAttribute("height",H);
-    const terrainImage = document.createElementNS("http://www.w3.org/2000/svg","image");
-    terrainImage.setAttribute("href",terrainUrl);
-    terrainImage.setAttribute("x","0");
-    terrainImage.setAttribute("y","0");
-    terrainImage.setAttribute("width",W);
-    terrainImage.setAttribute("height",H);
-    pattern.appendChild(terrainImage);
-    defs.appendChild(pattern);
-    svg.appendChild(defs);
-
     map.cells.forEach((cell,i)=>{
 
       const rect = document.createElementNS(
@@ -1121,7 +979,6 @@ function renderWorkout() {
         "class",
         cell[2]?"cell filled":"cell"
       );
-      if (cell[2]) rect.style.fill = `url(#${terrainPatternId})`;
 
       rect.dataset.cell = i;
 
@@ -1150,7 +1007,8 @@ function renderWorkout() {
     const hazeBlur=document.createElementNS("http://www.w3.org/2000/svg","feGaussianBlur");
     hazeBlur.setAttribute("stdDeviation","3.2");
     hazeFilter.appendChild(hazeBlur);
-    defs.appendChild(hazeFilter);
+    const defs = svg.querySelector("defs");
+    if (defs) defs.appendChild(hazeFilter);
     svg.appendChild(haze);
     outline.setAttribute("stroke","#aaa7a1");
     outline.setAttribute("stroke-width",".35");
@@ -1236,29 +1094,7 @@ function addRep(mapIndex,cellIndex) {
       "class",
       cell[2] ? "cell filled cell-pop" : "cell"
     );
-    rect.style.filter = "";
-    if (cell[2]) {
-      rect.style.fill = `url(#terrainPattern-${mapIndex})`;
-      rect.classList.remove("terrain-hide");
-      // Чёрная поверхность растворяется, открывая рельеф под ней.
-      const reveal = document.createElementNS("http://www.w3.org/2000/svg","rect");
-      reveal.setAttribute("x",cell[0]*CELL);
-      reveal.setAttribute("y",cell[1]*CELL);
-      reveal.setAttribute("width",CELL);
-      reveal.setAttribute("height",CELL);
-      reveal.setAttribute("class","terrain-reveal");
-      svg.appendChild(reveal);
-      reveal.addEventListener("animationend",()=>reveal.remove(),{once:true});
-    } else {
-      // При снятии отметки рельеф выцветает обратно в белую бумагу.
-      rect.classList.remove("terrain-hide");
-      void rect.getBoundingClientRect();
-      rect.classList.add("terrain-hide");
-      rect.addEventListener("animationend",()=>{
-        if (!cell[2]) rect.style.fill = "transparent";
-        rect.classList.remove("terrain-hide");
-      },{once:true});
-    }
+    rect.style.fill = cell[2] ? "var(--cell)" : "transparent";
   }
 
   if (cell[2]) playTone(520, .045, .016);
