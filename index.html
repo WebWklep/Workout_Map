@@ -356,23 +356,28 @@ button {
 
 .cell {
   fill: transparent;
+  transition: fill .13s ease-out, filter .13s ease-out, stroke .13s ease-out;
 }
 
 .cell.filled {
   fill: var(--cell);
 }
 
-/* Короткое, почти тактильное подтверждение отметки */
-.cell.cell-pop {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: cellFill .14s cubic-bezier(.2,.7,.25,1) both;
+/* Нажатие ощущается как лёгкое продавливание материала:
+   клетка меняет тон и получает тонкий графитовый край — без изменения размера. */
+.cell.cell-press {
+  fill: #77746e;
+  stroke: #494741;
+  stroke-width: .7;
+  vector-effect: non-scaling-stroke;
+  filter: brightness(1.04);
 }
 
-@keyframes cellFill {
-  0% { opacity: .72; transform: scale(.94); }
-  100% { opacity: 1; transform: scale(1); }
+.cell.filled.cell-press {
+  fill: #706d66;
 }
+
+/* Тихая смена цифр без скачка интерфейса */
 
 /* Тихая смена цифр без скачка интерфейса */
 .count-change {
@@ -386,7 +391,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell.cell-pop,
+  .cell,
   .count-change {
     animation: none !important;
   }
@@ -1130,10 +1135,16 @@ function addRep(mapIndex,cellIndex) {
   );
 
   if (rect) {
+    // Короткое тактильное состояние: тон и край меняются, геометрия остаётся неподвижной.
     rect.setAttribute(
       "class",
-      cell[2] ? "cell filled cell-pop" : "cell"
+      cell[2] ? "cell filled cell-press" : "cell cell-press"
     );
+
+    window.setTimeout(() => {
+      if (!rect.isConnected) return;
+      rect.setAttribute("class", cell[2] ? "cell filled" : "cell");
+    }, 135);
   }
 
   if (cell[2]) playTone(520, .045, .016);
