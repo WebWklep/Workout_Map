@@ -383,37 +383,42 @@ button {
   }
 }
 
-/* Секретный экран завершения карты */
-.completion-flash {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: #fff;
-  color: #353430;
-  opacity: 0;
-  pointer-events: none;
-  animation: completionFlash 1.65s ease both;
+/* Архивная отметка завершённой карты */
+.map-claimed {
+  display: flex;
+  justify-content: flex-end;
+  margin: 7px 13px 0;
+  color: #99968e;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  line-height: 1;
+  opacity: .78;
 }
 
-.completion-flash span {
-  font-size: clamp(22px, 6vw, 29px);
-  font-weight: 600;
-  letter-spacing: .16em;
-  animation: completionText 1.9s ease both;
+.map.is-claimed .outline {
+  stroke: #45443f;
+  transition: stroke .7s ease;
 }
 
-@keyframes completionFlash {
-  0%,100% { opacity: 0; }
-  18%,76% { opacity: 1; }
+.map.just-claimed .map-claimed {
+  animation: claimMark 1.1s cubic-bezier(.2,.65,.3,1) both;
 }
 
-@keyframes completionText {
-  0% { opacity: 0; filter: brightness(.45) blur(3px); transform: scale(.96); }
-  30% { opacity: 1; filter: brightness(1.55) blur(0); transform: scale(1.025); text-shadow: 0 0 18px rgba(53,52,48,.18); }
-  48%,70% { opacity: 1; filter: brightness(1) blur(0); transform: scale(1); text-shadow: 0 0 0 rgba(53,52,48,0); }
-  100% { opacity: 0; filter: brightness(.7) blur(2px); transform: scale(1.015); }
+.map.just-claimed svg {
+  animation: claimSettle .8s ease-out both;
+}
+
+@keyframes claimMark {
+  0% { opacity: 0; transform: translateY(3px); }
+  100% { opacity: .78; transform: translateY(0); }
+}
+
+@keyframes claimSettle {
+  0% { filter: contrast(1); }
+  45% { filter: contrast(1.07); }
+  100% { filter: contrast(1); }
 }
 
 /* КОНТУР */
@@ -539,16 +544,11 @@ function playTone(frequency = 520, duration = 0.045, volume = 0.018) {
   } catch (e) {}
 }
 
-function showMapComplete() {
-  const flash = document.createElement("div");
-  flash.className = "completion-flash";
-  const label = document.createElement("span");
-  label.textContent = "REGION COMPLETE";
-  flash.appendChild(label);
-  document.body.appendChild(flash);
-  flash.addEventListener("animationend", () => flash.remove(), {once:true});
-  playTone(660, .12, .025);
-  window.setTimeout(() => flash.remove(), 1800);
+function showMapComplete(mapIndex) {
+  const section = mapsEl.children[mapIndex];
+  if (!section) return;
+  section.classList.add("is-claimed","just-claimed");
+  window.setTimeout(() => section.classList.remove("just-claimed"),1200);
 }
 
 let state = {
@@ -1009,6 +1009,15 @@ function renderWorkout() {
     });
 
     section.appendChild(svg);
+
+    if (map.claimed) {
+      section.classList.add("is-claimed");
+      const mark = document.createElement("div");
+      mark.className = "map-claimed";
+      mark.textContent = String(mapIndex+1).padStart(2,"0") + " / CLAIMED";
+      section.appendChild(mark);
+    }
+
     mapsEl.appendChild(section);
   });
 
@@ -1135,12 +1144,13 @@ function addRep(mapIndex,cellIndex) {
     mapIndex===exercise.maps.length-1
   ) {
 
-    showMapComplete();
+    map.claimed = true;
     exercise.maps.push({
       cells:randomIsland()
     });
 
     renderWorkout();
+    showMapComplete(mapIndex);
   }
 
   updateInfo();
