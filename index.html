@@ -356,42 +356,13 @@ button {
 
 .cell {
   fill: transparent;
-  transition: fill .58s cubic-bezier(.22,.7,.2,1);
+  transition: fill .22s cubic-bezier(.2,.65,.3,1);
 }
 
 .cell.filled {
   fill: var(--cell);
 }
 
-/* Чернила сначала собираются в точке касания, затем мягко расплываются
-   и впитываются в клетку, не меняя её геометрию. */
-.cell-ink {
-  pointer-events: none;
-  fill: url(#pressGradient);
-  filter: blur(1.8px);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: inkAbsorb .72s cubic-bezier(.18,.62,.32,1) forwards;
-}
-
-@keyframes inkAbsorb {
-  0% {
-    opacity: 0;
-    transform: scale(.12);
-  }
-  16% {
-    opacity: .88;
-    transform: scale(.42);
-  }
-  48% {
-    opacity: .62;
-    transform: scale(.88);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.28);
-  }
-}
 
 /* Тихая смена цифр без скачка интерфейса */
 .count-change {
@@ -405,9 +376,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell-ink,
+  .cell,
   .count-change {
     animation: none !important;
+    transition: none !important;
   }
 }
 
@@ -977,20 +949,6 @@ function renderWorkout() {
 
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
-    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
-    const gradient = document.createElementNS("http://www.w3.org/2000/svg","radialGradient");
-    gradient.setAttribute("id","pressGradient");
-    gradient.setAttribute("cx","50%");
-    gradient.setAttribute("cy","50%");
-    gradient.setAttribute("r","50%");
-    gradient.innerHTML = `
-      <stop offset="0%" stop-color="#24231f" stop-opacity=".43"/>
-      <stop offset="30%" stop-color="#24231f" stop-opacity=".29"/>
-      <stop offset="68%" stop-color="#24231f" stop-opacity=".10"/>
-      <stop offset="100%" stop-color="#24231f" stop-opacity="0"/>
-    `;
-    defs.appendChild(gradient);
-    svg.appendChild(defs);
 
     map.cells.forEach((cell,i)=>{
 
@@ -1163,19 +1121,9 @@ function addRep(mapIndex,cellIndex) {
     `[data-cell="${cellIndex}"]`
   );
 
-  if (rect && svg) {
-    // Сначала меняем состояние самой клетки: чернила остаются в ней,
-    // а мягкое пятно поверх лишь сопровождает касание.
+  if (rect) {
+    // Меняется только плотность самой клетки — без дополнительных эффектов.
     rect.classList.toggle("filled",cell[2]);
-
-    const ink = document.createElementNS("http://www.w3.org/2000/svg","circle");
-    ink.setAttribute("cx",cell[0]*CELL + CELL/2);
-    ink.setAttribute("cy",cell[1]*CELL + CELL/2);
-    ink.setAttribute("r",CELL*.72);
-    ink.setAttribute("class","cell-ink");
-    svg.appendChild(ink);
-    ink.addEventListener("animationend",()=>ink.remove(),{once:true});
-    window.setTimeout(()=>ink.remove(),780);
   }
 
   if (cell[2]) playTone(520, .045, .016);
