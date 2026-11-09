@@ -212,10 +212,10 @@ button {
 .edit-title {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 40px;
-  margin-left: auto;
-  flex: 0 0 36px;
+  width: 44px;
+  height: 44px;
+  margin-left: 0;
+  flex: 0 0 44px;
   color: #77766f;
   font-size: 18px;
 }
@@ -266,9 +266,10 @@ button {
 }
 
 .map-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr) 44px;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   margin: 0 13px 28px;
 }
 
@@ -282,7 +283,7 @@ button {
 
 .map-title {
   font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: -.045em;
@@ -290,7 +291,9 @@ button {
   overflow-wrap: anywhere;
   text-shadow: none;
   min-width: 0;
-  flex: 1;
+  text-align: center;
+  line-height: 1;
+  padding: 0 5px;
 }
 
 .map-info {
@@ -417,23 +420,33 @@ button {
 
 .footer {
   position: fixed;
-  left: 13px;
+  right: 13px;
+  left: auto;
   bottom: max(12px, env(safe-area-inset-bottom));
   margin: 0;
   display: flex;
-  justify-content: flex-start;
-  gap: 9px;
-  font-size: 13px;
-  color: #77766f;
-  letter-spacing: -.3px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9px;
+  line-height: 1.1;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: .02em;
   z-index: 20;
+  mix-blend-mode: difference;
+  pointer-events: none;
 }
 
 #totalReps {
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .2px;
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: .02em;
   font-variant-numeric: tabular-nums;
+  color: inherit;
 }
 
 button:active {
@@ -471,14 +484,14 @@ button:active {
   </div>
 
   <div class="map-info">
-    <span>MAP✶PROGRESS <span id="mapPercent">0%</span></span>
+    <span>MAP PROGRESS <span id="mapPercent">0%</span></span>
     <button class="reroll-map" id="rerollLargest" type="button" aria-label="Сменить самый большой контур" title="Сменить самый большой контур">⚄</button>
   </div>
 
   <div id="maps"></div>
 
   <div class="footer">
-    <span>TOTAL✶REPS</span>
+    <span class="footer-label">TOTAL REPS</span>
     <span id="totalReps">000</span>
   </div>
 
@@ -557,10 +570,10 @@ let state = {
 };
 
 
-/* СИМВОЛ ВМЕСТО ПРОБЕЛОВ */
+/* НОРМАЛИЗАЦИЯ НАЗВАНИЙ */
 
 function starText(text) {
-  return String(text).trim().replace(/\s+/g, "✶");
+  return String(text).trim().replace(/\s+/g, " ");
 }
 
 
