@@ -948,10 +948,13 @@ function renderWorkout() {
         "rect"
       );
 
-      rect.setAttribute("x",cell[0]*CELL);
-      rect.setAttribute("y",cell[1]*CELL);
-      rect.setAttribute("width",CELL);
-      rect.setAttribute("height",CELL);
+      // Едва смягчаем внешний силуэт острова, сохраняя плотную сетку без щелей.
+      rect.setAttribute("x",cell[0]*CELL - 0.25);
+      rect.setAttribute("y",cell[1]*CELL - 0.25);
+      rect.setAttribute("width",CELL + 0.5);
+      rect.setAttribute("height",CELL + 0.5);
+      rect.setAttribute("rx","1.15");
+      rect.setAttribute("ry","1.15");
 
       rect.setAttribute(
         "class",
