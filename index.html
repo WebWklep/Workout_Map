@@ -398,9 +398,29 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .cell,
-  .count-change {
+  .count-change,
+  .map.is-entering svg {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Новая территория спокойно проявляется на бумаге */
+.map.is-entering svg {
+  transform-origin: center center;
+  animation: mapReveal .82s cubic-bezier(.2,.7,.25,1) both;
+}
+
+@keyframes mapReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(9px) scale(.994);
+    filter: blur(1.4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 
@@ -420,8 +440,8 @@ button {
 .outline {
   pointer-events: none;
   fill: none;
-  stroke: #77746e;
-  stroke-width: 1;
+  stroke: #85837d;
+  stroke-width: .9;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
   filter: none;
@@ -1156,7 +1176,9 @@ function addRep(mapIndex,cellIndex) {
     exercise.maps.push(nextMap);
 
     const nextSection = createMapSection(nextMap,exercise.maps.length-1);
+    nextSection.classList.add("is-entering");
     mapsEl.appendChild(nextSection);
+    window.setTimeout(()=>nextSection.classList.remove("is-entering"),900);
 
     // Камера спокойно переходит к новой территории; предыдущая остаётся выше.
     requestAnimationFrame(()=>scrollToNewMap(nextSection));
