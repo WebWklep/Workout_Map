@@ -362,17 +362,34 @@ button {
   fill: var(--cell);
 }
 
-/* Мягкое появление заполненной клетки */
+/* Короткое, почти тактильное подтверждение отметки */
 .cell.cell-pop {
   transform-box: fill-box;
   transform-origin: center;
-  animation: cellFill .22s cubic-bezier(.2,.8,.25,1) both;
+  animation: cellFill .14s cubic-bezier(.2,.7,.25,1) both;
 }
 
 @keyframes cellFill {
-  0% { opacity: .35; transform: scale(.58); }
-  72% { opacity: 1; transform: scale(1.08); }
+  0% { opacity: .72; transform: scale(.94); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+/* Тихая смена цифр без скачка интерфейса */
+.count-change {
+  display: inline-block;
+  animation: countChange .18s ease-out both;
+}
+
+@keyframes countChange {
+  0% { opacity: .45; transform: translateY(3px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.cell-pop,
+  .count-change {
+    animation: none !important;
+  }
 }
 
 /* Секретный экран завершения карты */
@@ -1143,17 +1160,32 @@ function addRep(mapIndex,cellIndex) {
 
 /* ИНФОРМАЦИЯ */
 
+function updateAnimatedValue(element, value) {
+  const next = String(value);
+  if (element.textContent === next) return;
+
+  element.textContent = next;
+  element.classList.remove("count-change");
+  // Перезапускаем короткую анимацию только у изменившейся цифры.
+  void element.offsetWidth;
+  element.classList.add("count-change");
+}
+
 function updateInfo() {
 
   const exercise = getCurrent();
 
   if (!exercise) return;
 
-  document.getElementById("mapPercent").textContent =
-    getProgress(exercise)+"%";
+  updateAnimatedValue(
+    document.getElementById("mapPercent"),
+    getProgress(exercise)+"%"
+  );
 
-  document.getElementById("totalReps").textContent =
-    String(exercise.reps).padStart(3,"0");
+  updateAnimatedValue(
+    document.getElementById("totalReps"),
+    String(exercise.reps).padStart(3,"0")
+  );
 
   save();
 }
