@@ -921,17 +921,18 @@ document.getElementById("back").onclick = ()=>{
 
 /* ПРОЦЕДУРНЫЙ РЕЛЬЕФ: непрерывная высотная карта с имитацией спутникового hillshade */
 function makeTerrainTexture(seed = 9137) {
-  // Высокодетальная процедурная высотная карта. Вся поверхность общая,
-  // поэтому рельеф продолжается через границы соседних клеток.
-  const SCALE = 2;
-  const TW = W*SCALE, TH = H*SCALE;
+  // Настоящая треугольная 3D-сетка высот: вершины имеют Z-высоту,
+  // а каждый полигон получает освещение по своей нормали.
+  const SCALE = 1.5;
+  const TW = Math.round(W*SCALE), TH = Math.round(H*SCALE);
   const canvas = document.createElement("canvas");
   canvas.width = TW; canvas.height = TH;
-  const ctx = canvas.getContext("2d", {willReadFrequently:true});
-  const image = ctx.createImageData(TW,TH);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#aaa9a6";
+  ctx.fillRect(0,0,TW,TH);
 
   function hash(ix,iy) {
-    let n = Math.imul(ix,374761393) + Math.imul(iy,668265263) + Math.imul(seed,1442695041);
+    let n = Math.imul(ix|0,374761393) + Math.imul(iy|0,668265263) + Math.imul(seed|0,1442695041);
     n = Math.imul(n ^ (n >>> 13),1274126177);
     return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
   }
@@ -943,44 +944,108 @@ function makeTerrainTexture(seed = 9137) {
     return u+(v-u)*fy;
   }
   function fbm(x,y) {
-    return noise(x,y)*.52 + noise(x*2.03+17,y*2.03-9)*.29 + noise(x*4.1-5,y*4.1+23)*.13 + noise(x*8.2+3,y*8.2+11)*.06;
+    return noise(x,y)*.55 + noise(x*2.07+17,y*2.07-9)*.27 + noise(x*4.13-5,y*4.13+23)*.12 + noise(x*8.1+3,y*8.1+11)*.06;
+  }
+  function ridge(distance,width) {
+    const q=distance/width;
+    return Math.exp(-q*q*1.35);
   }
   function heightAt(px,py) {
     const x=px/SCALE, y=py/SCALE;
-    const wx=x+(fbm(x/105+12,y/105+8)-.5)*34;
-    const wy=y+(fbm(x/105+28,y/105+3)-.5)*34;
-    const continental=fbm(wx/118+4,wy/118+7);
-    const massif=fbm(wx/49+19,wy/49+3);
-    const erosion=fbm(wx/21+2,wy/21+23);
-    const ridgeA=Math.pow(1-Math.abs(fbm(wx/61+31,wy/61+11)*2-1),2.35);
-    const ridgeB=Math.pow(1-Math.abs(noise(wx/29+7,wy/29+41)*2-1),3.4);
-    const basin=noise(wx/82+44,wy/82-18);
-    return continental*.20 + massif*.22 + erosion*.08 + ridgeA*.29 + ridgeB*.16 + basin*.05;
+    // Несколько крупных связанных горных цепей — масштаб в десятки клеток,
+    // а не россыпь мелких бугров.
+    const warp=(fbm(x/125+4,y/125+9)-.5)*42;
+    const wx=x+warp;
+    const wy=y+(fbm(x/130+19,y/130+2)-.5)*38;
+    const spine1=H*.27 + Math.sin(wx/88+.35)*47 + Math.sin(wx/ thirty + .8)*0;
+    const chain1= ridge(wy-spine1,29)*.76;
+    const spine2=H*.68 + Math.sin(wx/112+2.1)*58 + Math.sin(wx/39+1.2)*17;
+    const chain2= ridge(wy-spine2,35)*.69;
+    const spine3=W*.69 + Math.sin(wy/105+1.7)*43 + Math.sin(wy/42)*13;
+    const chain3=ridge(wx-spine3,25)*.42;
+    const massif1=Math.exp(-(((wx-W*.25)/88)**2+((wy-H*.30)/105)**2))* .48;
+    const massif2=Math.exp(-(((wx-W*.68)/105)**2+((wy-H*.55)/92)**2))* .43;
+    const massif3=Math.exp(-(((wx-W*.40)/78)**2+((wy-H*.83)/76)**2))* .34;
+    const valleys=fbm(wx/47+37,wy/47-21);
+    const erosion=fbm(wx/17+2,wy/18+23);
+    const rugged=Math.pow(1-Math.abs(fbm(wx/31+31,wy/31+11)*2-1),2.1);
+    let h=.10 + chain1+chain2+chain3+massif1+massif2+massif3;
+    h += (valleys-.5)*.19 + (erosion-.5)*.10 + rugged*.13;
+    // Размываем часть склонов, но оставляем острые гребни и глубокие седловины.
+    return Math.max(0,Math.min(1,h/1.72));
   }
 
-  const heights=new Float32Array(TW*TH);
-  for(let y=0;y<TH;y++) for(let x=0;x<TW;x++) heights[y*TW+x]=heightAt(x,y);
-  const at=(x,y)=>heights[Math.max(0,Math.min(TH-1,y))*TW+Math.max(0,Math.min(TW-1,x))];
+  // Сетка достаточно плотная для деталей, но крупные формы остаются читаемыми.
+  const NX=112, NY=136;
+  const vertices=[];
+  for(let gy=0;gy<=NY;gy++) {
+    const row=[];
+    for(let gx=0;gx<=NX;gx++) {
+      const x=gx/NX*TW, y=gy/NY*TH;
+      const h=heightAt(x,y);
+      const z=h*104;
+      // Небольшой наклон камеры сверху: высота действительно смещает геометрию.
+      row.push({x:x+z*.055,y:y-z*.34,z,h});
+    }
+    vertices.push(row);
+  }
+  const light={x:-.48,y:-.57,z:.66};
+  const lightLen=Math.hypot(light.x,light.y,light.z);
+  light.x/=lightLen; light.y/=lightLen; light.z/=lightLen;
 
+  function drawTriangle(a,b,c) {
+    const ux=b.x-a.x, uy=b.y-a.y, uz=b.z-a.z;
+    const vx=c.x-a.x, vy=c.y-a.y, vz=c.z-a.z;
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+    const len=Math.hypot(nx,ny,nz)||1;
+    nx/=len; ny/=len; nz/=len;
+    if(nz<0) { nx=-nx; ny=-ny; nz=-nz; }
+    const diffuse=Math.max(0,nx*light.x+ny*light.y+nz*light.z);
+    const ambient=.36 + Math.max(0,nz)*.22;
+    const elevation=(a.h+b.h+c.h)/3;
+    const local=(noise((a.x+b.x+c.x)/3/12+seed,(a.y+b.y+c.y)/3/12-seed)-.5)*7;
+    const value=Math.max(20,Math.min(242,28+ambient*78+diffuse*137+(elevation-.34)*32+local));
+    const shade=Math.round(value);
+    ctx.fillStyle="rgb("+shade+","+shade+","+shade+")";
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Рисуем от дальнего края к ближнему, как единую непрерывную поверхность.
+  for(let gy=0;gy<NY;gy++) {
+    for(let gx=0;gx<NX;gx++) {
+      const a=vertices[gy][gx], b=vertices[gy][gx+1];
+      const c=vertices[gy+1][gx], d=vertices[gy+1][gx+1];
+      if((gx+gy)%2===0) {
+        drawTriangle(a,c,b); drawTriangle(b,c,d);
+      } else {
+        drawTriangle(a,c,d); drawTriangle(a,d,b);
+      }
+    }
+  }
+
+  // Тонкая геологическая фактура поверх геометрии — не вместо рельефа.
+  const grain=ctx.createImageData(TW,TH);
   for(let y=0;y<TH;y++) for(let x=0;x<TW;x++) {
-    const h=heights[y*TW+x];
-    const dx=(at(x+1,y)-at(x-1,y))*SCALE;
-    const dy=(at(x,y+1)-at(x,y-1))*SCALE;
-    const dxx=at(x+1,y)+at(x-1,y)-2*h;
-    const dyy=at(x,y+1)+at(x,y-1)-2*h;
-    // Направленный hillshade + локальное затенение ущелий.
-    const nx=-dx*15.5, ny=-dy*18.5, nz=1.0;
-    const inv=1/Math.sqrt(nx*nx+ny*ny+nz*nz);
-    const diffuse=Math.max(0,(-.48*nx + -.62*ny + .62*nz)*inv);
-    const ambient=Math.max(-.20,Math.min(.16,-(dxx+dyy)*8.5));
-    const altitude=(h-.49)*190;
-    const fine=(fbm(x/13+seed,y/13-seed)-.5)*9;
-    const rock=(noise(x/5.2+seed*2,y/5.2+seed)*2-1)*3.5;
-    const value=Math.max(12,Math.min(246,35 + diffuse*178 + altitude + ambient*90 + fine + rock));
+    const n=(noise(x/7.5+seed*2,y/7.5-seed)-.5)*13;
     const i=(y*TW+x)*4;
-    image.data[i]=value; image.data[i+1]=value; image.data[i+2]=value; image.data[i+3]=255;
+    grain.data[i]=128+n; grain.data[i+1]=128+n; grain.data[i+2]=128+n;
+    grain.data[i+3]=Math.min(30,Math.abs(n)*2.1);
   }
-  ctx.putImageData(image,0,0);
+  const grainCanvas=document.createElement("canvas");
+  grainCanvas.width=TW; grainCanvas.height=TH;
+  grainCanvas.getContext("2d").putImageData(grain,0,0);
+  ctx.globalAlpha=.20;
+  ctx.drawImage(grainCanvas,0,0);
+  ctx.globalAlpha=1;
+
+  // Лёгкая атмосферная дымка, как на спутниковом снимке.
+  const haze=ctx.createLinearGradient(0,0,TW,TH);
+  haze.addColorStop(0,"rgba(255,255,255,.12)");
+  haze.addColorStop(.48,"rgba(255,255,255,0)");
+  haze.addColorStop(1,"rgba(20,20,20,.08)");
+  ctx.fillStyle=haze; ctx.fillRect(0,0,TW,TH);
   return canvas.toDataURL("image/png");
 }
 
