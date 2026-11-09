@@ -993,23 +993,6 @@ function renderWorkout() {
     outline.setAttribute("d",makeOutline(map.cells));
     outline.setAttribute("class","outline");
 
-    // Мягкая атмосферная дымка за краем рельефа — без жирной рамки.
-    const haze = outline.cloneNode();
-    haze.setAttribute("class","terrain-haze");
-    haze.setAttribute("stroke","#77736d");
-    haze.setAttribute("stroke-width","7");
-    haze.setAttribute("opacity",".22");
-    haze.setAttribute("filter","url(#terrainHazeBlur-"+mapIndex+")");
-    const hazeFilter=document.createElementNS("http://www.w3.org/2000/svg","filter");
-    hazeFilter.setAttribute("id","terrainHazeBlur-"+mapIndex);
-    hazeFilter.setAttribute("x","-18%"); hazeFilter.setAttribute("y","-18%");
-    hazeFilter.setAttribute("width","136%"); hazeFilter.setAttribute("height","136%");
-    const hazeBlur=document.createElementNS("http://www.w3.org/2000/svg","feGaussianBlur");
-    hazeBlur.setAttribute("stdDeviation","3.2");
-    hazeFilter.appendChild(hazeBlur);
-    const defs = svg.querySelector("defs");
-    if (defs) defs.appendChild(hazeFilter);
-    svg.appendChild(haze);
     outline.setAttribute("stroke","#aaa7a1");
     outline.setAttribute("stroke-width",".35");
     outline.setAttribute("opacity",".18");
