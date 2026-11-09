@@ -347,6 +347,15 @@ button {
   pointer-events: none;
   animation: terrainUncover .72s cubic-bezier(.2,.65,.25,1) forwards;
 }
+.terrain-hide {
+  animation: terrainFadeOut .62s cubic-bezier(.35,0,.7,.35) forwards;
+  pointer-events: none;
+}
+@keyframes terrainFadeOut {
+  0% { opacity: 1; filter: brightness(1); }
+  55% { opacity: .58; filter: brightness(1.35); }
+  100% { opacity: 0; filter: brightness(1.8); }
+}
 @keyframes terrainUncover {
   0% { opacity: 1; }
   28% { opacity: .94; }
@@ -933,11 +942,17 @@ function makeTerrainTexture(seed = 9137) {
     return top+(bottom-top)*fy;
   }
   function heightAt(x,y) {
-    const broad = noise(x/112+4,y/112+7);
-    const mid = noise(x/48+19,y/48+3);
-    const fine = noise(x/19+2,y/19+23);
-    const ridges = 1-Math.abs(noise(x/68+31,y/68+11)*2-1);
-    return broad*.48 + mid*.24 + fine*.09 + ridges*.19;
+    // Искажаем координаты, чтобы хребты были похожи на реальные горные цепи.
+    const warpX = (noise(x/95+12,y/95+8)-.5)*30;
+    const warpY = (noise(x/95+28,y/95+3)-.5)*30;
+    const wx = x+warpX, wy = y+warpY;
+    const broad = noise(wx/105+4,wy/105+7);
+    const mid = noise(wx/43+19,wy/43+3);
+    const fine = noise(wx/17+2,wy/17+23);
+    const ridgeNoise = noise(wx/54+31,wy/54+11)*2-1;
+    const ridges = Math.pow(1-Math.abs(ridgeNoise),2.15);
+    const sharpRidges = Math.pow(1-Math.abs(noise(wx/27+7,wy/27+41)*2-1),3.1);
+    return broad*.27 + mid*.25 + fine*.10 + ridges*.25 + sharpRidges*.13;
   }
 
   const heights = new Float32Array(W*H);
@@ -949,9 +964,13 @@ function makeTerrainTexture(seed = 9137) {
     const dx=at(x+1,y)-at(x-1,y);
     const dy=at(x,y+1)-at(x,y-1);
     // Свет сверху-слева: склоны читаются как рельеф, а не как шум.
-    const shade=Math.max(-.42,Math.min(.42,(-dx*.95-dy*1.25)*5.2));
-    const detail=(noise(x/5+seed,y/5+seed)-.5)*7;
-    const value=Math.max(28,Math.min(235,151+(h-.5)*155+shade*115+detail));
+    const slope = (-dx*.82-dy*1.18);
+    const shade=Math.max(-.78,Math.min(.78,slope*12.5));
+    const ridgeDetail=(noise(x/8+seed,y/8+seed)-.5)*13;
+    const micro=(noise(x/3.1+seed*2,y/3.1+seed*2)-.5)*4;
+    // Усиливаем разницу между вершинами и ущельями, добавляем читаемые склоны.
+    const valley=Math.max(0,.48-h)*22;
+    const value=Math.max(18,Math.min(246,145+(h-.5)*205+shade*155-valley+ridgeDetail+micro));
     const i=(y*W+x)*4;
     image.data[i]=value;
     image.data[i+1]=value;
@@ -1182,9 +1201,10 @@ function addRep(mapIndex,cellIndex) {
       "class",
       cell[2] ? "cell filled cell-pop" : "cell"
     );
-    rect.style.fill = cell[2] ? `url(#terrainPattern-${mapIndex})` : "transparent";
     rect.style.filter = "";
     if (cell[2]) {
+      rect.style.fill = `url(#terrainPattern-${mapIndex})`;
+      rect.classList.remove("terrain-hide");
       // Чёрная поверхность растворяется, открывая рельеф под ней.
       const reveal = document.createElementNS("http://www.w3.org/2000/svg","rect");
       reveal.setAttribute("x",cell[0]*CELL);
@@ -1194,6 +1214,15 @@ function addRep(mapIndex,cellIndex) {
       reveal.setAttribute("class","terrain-reveal");
       svg.appendChild(reveal);
       reveal.addEventListener("animationend",()=>reveal.remove(),{once:true});
+    } else {
+      // При снятии отметки рельеф выцветает обратно в белую бумагу.
+      rect.classList.remove("terrain-hide");
+      void rect.getBoundingClientRect();
+      rect.classList.add("terrain-hide");
+      rect.addEventListener("animationend",()=>{
+        if (!cell[2]) rect.style.fill = "transparent";
+        rect.classList.remove("terrain-hide");
+      },{once:true});
     }
   }
 
