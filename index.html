@@ -16,7 +16,7 @@
   --ink: #353430;
   --soft: #85847e;
   --line: #aaa9a2;
-  --cell: #33322f;
+  --cell: #55534f;
 }
 
 html {
@@ -40,7 +40,18 @@ body {
   user-select: none;
 }
 
-/* Чистый фон без молочной дымки и наложенных эффектов */
+/* Чистая бумажная основа с очень деликатным печатным зерном */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: .105;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='.34'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
 
 button {
   font: inherit;
@@ -339,8 +350,8 @@ button {
 .outline {
   pointer-events: none;
   fill: none;
-  stroke: #55544e;
-  stroke-width: 1.1;
+  stroke: #77746e;
+  stroke-width: 1;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
   filter: none;
