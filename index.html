@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#ffffff">
-<title>UNFOG</title>
+<title>CLAIM BY POWER</title>
 
 <style>
 * {
@@ -88,13 +88,45 @@ button {
 .topline {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 38px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -.25px;
   color: #4b4a45;
   text-shadow: none;
+}
+
+.brand-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1;
+}
+
+.brand-main {
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-size: 25px;
+  line-height: .9;
+  font-weight: 700;
+  letter-spacing: -.055em;
+}
+
+.brand-sub {
+  margin-top: 4px;
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: .31em;
+  color: #85817a;
+}
+
+#exerciseCount {
+  padding-top: 2px;
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: #77746e;
 }
 
 #exerciseList {
@@ -407,7 +439,10 @@ button:active {
 <section id="home">
 
   <div class="topline">
-    <span>UNFOG</span>
+    <div class="brand-lockup" aria-label="Claim by Power">
+      <span class="brand-main">CLAIM</span>
+      <span class="brand-sub">BY POWER</span>
+    </div>
     <span id="exerciseCount">00</span>
   </div>
 
