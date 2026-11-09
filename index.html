@@ -335,15 +335,7 @@ button {
 }
 
 /* Рваная графитовая кромка — будто слой земли слегка выступает из-под сетки */
-.earth-dust {
-  fill: none;
-  stroke: #55534f;
-  stroke-width: 4.2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  opacity: .27;
-  pointer-events: none;
-}
+.earth-dust { display: none; }
 
 /* Мягкое появление заполненной клетки */
 .cell.cell-pop {
@@ -902,6 +894,58 @@ document.getElementById("back").onclick = ()=>{
 };
 
 
+/* ПРОЦЕДУРНЫЙ РЕЛЬЕФ: непрерывная высотная карта с имитацией спутникового hillshade */
+function makeTerrainTexture(seed = 9137) {
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
+  const image = ctx.createImageData(W,H);
+
+  function hash(ix,iy) {
+    let n = ix*374761393 + iy*668265263 + seed*1442695041;
+    n = (n ^ (n >>> 13)) * 1274126177;
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function smooth(t) { return t*t*(3-2*t); }
+  function noise(x,y) {
+    const ix=Math.floor(x), iy=Math.floor(y);
+    const fx=smooth(x-ix), fy=smooth(y-iy);
+    const a=hash(ix,iy), b=hash(ix+1,iy);
+    const c=hash(ix,iy+1), d=hash(ix+1,iy+1);
+    const top=a+(b-a)*fx, bottom=c+(d-c)*fx;
+    return top+(bottom-top)*fy;
+  }
+  function heightAt(x,y) {
+    const broad = noise(x/112+4,y/112+7);
+    const mid = noise(x/48+19,y/48+3);
+    const fine = noise(x/19+2,y/19+23);
+    const ridges = 1-Math.abs(noise(x/68+31,y/68+11)*2-1);
+    return broad*.48 + mid*.24 + fine*.09 + ridges*.19;
+  }
+
+  const heights = new Float32Array(W*H);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) heights[y*W+x]=heightAt(x,y);
+
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+    const at=(xx,yy)=>heights[Math.max(0,Math.min(H-1,yy))*W+Math.max(0,Math.min(W-1,xx))];
+    const h=heights[y*W+x];
+    const dx=at(x+1,y)-at(x-1,y);
+    const dy=at(x,y+1)-at(x,y-1);
+    // Свет сверху-слева: склоны читаются как рельеф, а не как шум.
+    const shade=Math.max(-.42,Math.min(.42,(-dx*.95-dy*1.25)*5.2));
+    const detail=(noise(x/5+seed,y/5+seed)-.5)*7;
+    const value=Math.max(28,Math.min(235,151+(h-.5)*155+shade*115+detail));
+    const i=(y*W+x)*4;
+    image.data[i]=value;
+    image.data[i+1]=value;
+    image.data[i+2]=value;
+    image.data[i+3]=255;
+  }
+  ctx.putImageData(image,0,0);
+  return canvas.toDataURL("image/png");
+}
+
 /* ОТРИСОВКА КАРТ */
 
 function renderWorkout() {
@@ -925,24 +969,23 @@ function renderWorkout() {
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
     const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
-    const earthFilterId = `earthTexture-${mapIndex}`;
-    const dustFilterId = `dustRough-${mapIndex}`;
-    defs.innerHTML = `
-      <filter id="${earthFilterId}" x="-18%" y="-18%" width="136%" height="136%">
-        <feTurbulence type="fractalNoise" baseFrequency=".62" numOctaves="3" seed="8" result="earthGrain"/>
-        <feColorMatrix in="earthGrain" type="saturate" values="0" result="monoGrain"/>
-        <feComponentTransfer in="monoGrain" result="grainContrast">
-          <feFuncA type="table" tableValues=".08 .42"/>
-        </feComponentTransfer>
-        <feDisplacementMap in="SourceGraphic" in2="monoGrain" scale="1.15" xChannelSelector="R" yChannelSelector="G" result="roughInk"/>
-        <feBlend in="roughInk" in2="grainContrast" mode="multiply"/>
-      </filter>
-      <filter id="${dustFilterId}" x="-35%" y="-35%" width="170%" height="170%">
-        <feTurbulence type="fractalNoise" baseFrequency=".085" numOctaves="2" seed="13" result="edgeNoise"/>
-        <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="5.5" xChannelSelector="R" yChannelSelector="G" result="tornEdge"/>
-        <feGaussianBlur in="tornEdge" stdDeviation=".55"/>
-      </filter>
-    `;
+    const terrainPatternId = `terrainPattern-${mapIndex}`;
+    const terrainUrl = makeTerrainTexture(9137 + mapIndex * 7919);
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg","pattern");
+    pattern.setAttribute("id",terrainPatternId);
+    pattern.setAttribute("patternUnits","userSpaceOnUse");
+    pattern.setAttribute("x","0");
+    pattern.setAttribute("y","0");
+    pattern.setAttribute("width",W);
+    pattern.setAttribute("height",H);
+    const terrainImage = document.createElementNS("http://www.w3.org/2000/svg","image");
+    terrainImage.setAttribute("href",terrainUrl);
+    terrainImage.setAttribute("x","0");
+    terrainImage.setAttribute("y","0");
+    terrainImage.setAttribute("width",W);
+    terrainImage.setAttribute("height",H);
+    pattern.appendChild(terrainImage);
+    defs.appendChild(pattern);
     svg.appendChild(defs);
 
     map.cells.forEach((cell,i)=>{
@@ -961,7 +1004,7 @@ function renderWorkout() {
         "class",
         cell[2]?"cell filled":"cell"
       );
-      if (cell[2]) rect.style.filter = `url(#${earthFilterId})`;
+      if (cell[2]) rect.style.fill = `url(#${terrainPatternId})`;
 
       rect.dataset.cell = i;
 
@@ -976,10 +1019,10 @@ function renderWorkout() {
     outline.setAttribute("d",makeOutline(map.cells));
     outline.setAttribute("class","outline");
 
-    const dust = outline.cloneNode();
-    dust.setAttribute("class","earth-dust");
-    dust.style.filter = `url(#${dustFilterId})`;
-    svg.appendChild(dust);
+    // Только тонкая, почти незаметная граница территории — без жирной обводки.
+    outline.setAttribute("stroke","#8d8a84");
+    outline.setAttribute("stroke-width",".55");
+    outline.setAttribute("opacity",".42");
     svg.appendChild(outline);
 
     // Определяем ячейку по координатам касания, а не по event.target.
