@@ -316,20 +316,22 @@ button {
 }
 
 .completion-flash span {
-  font-size: 15px;
+  font-size: clamp(22px, 6vw, 29px);
   font-weight: 600;
-  letter-spacing: .22em;
-  animation: completionText 1.65s ease both;
+  letter-spacing: .16em;
+  animation: completionText 1.9s ease both;
 }
 
 @keyframes completionFlash {
   0%,100% { opacity: 0; }
-  18%,72% { opacity: 1; }
+  18%,76% { opacity: 1; }
 }
 
 @keyframes completionText {
-  0%,100% { opacity: 0; transform: translateY(7px) scale(.96); }
-  25%,68% { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; filter: brightness(.45) blur(3px); transform: scale(.96); }
+  30% { opacity: 1; filter: brightness(1.55) blur(0); transform: scale(1.025); text-shadow: 0 0 18px rgba(53,52,48,.18); }
+  48%,70% { opacity: 1; filter: brightness(1) blur(0); transform: scale(1); text-shadow: 0 0 0 rgba(53,52,48,0); }
+  100% { opacity: 0; filter: brightness(.7) blur(2px); transform: scale(1.015); }
 }
 
 /* КОНТУР */
@@ -456,7 +458,7 @@ function showMapComplete() {
   const flash = document.createElement("div");
   flash.className = "completion-flash";
   const label = document.createElement("span");
-  label.textContent = "MAP COMPLETE ✳";
+  label.textContent = "REGION COMPLETE";
   flash.appendChild(label);
   document.body.appendChild(flash);
   flash.addEventListener("animationend", () => flash.remove(), {once:true});
