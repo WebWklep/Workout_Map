@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#eeede8">
+<meta name="theme-color" content="#ffffff">
 <title>UNFOG</title>
 
 <style>
@@ -12,7 +12,7 @@
 }
 
 :root {
-  --paper: #eeede8;
+  --paper: #ffffff;
   --ink: #353430;
   --soft: #85847e;
   --line: #aaa9a2;
@@ -33,27 +33,14 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-  background: #eeede8;
+  background: #ffffff;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   user-select: none;
 }
 
-/* Без зерна и дымки — чистая резкая поверхность */
-
-
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: -10px;
-  z-index: 29;
-  pointer-events: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: transparent;
-}
+/* Чистый фон без молочной дымки и наложенных эффектов */
 
 button {
   font: inherit;
