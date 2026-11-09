@@ -356,28 +356,26 @@ button {
 
 .cell {
   fill: transparent;
-  transition: fill .13s ease-out, filter .13s ease-out, stroke .13s ease-out;
 }
 
 .cell.filled {
   fill: var(--cell);
 }
 
-/* Нажатие ощущается как лёгкое продавливание материала:
-   клетка меняет тон и получает тонкий графитовый край — без изменения размера. */
-.cell.cell-press {
-  fill: #77746e;
-  stroke: #494741;
-  stroke-width: .7;
-  vector-effect: non-scaling-stroke;
-  filter: brightness(1.04);
+/* Мягкая тёмная «вмятина» в центре касания — без контура и без изменения геометрии. */
+.cell-dimple {
+  pointer-events: none;
+  fill: url(#pressGradient);
+  filter: blur(1.1px);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dimpleFade .46s ease-out forwards;
 }
 
-.cell.filled.cell-press {
-  fill: #706d66;
+@keyframes dimpleFade {
+  0% { opacity: .9; }
+  100% { opacity: 0; }
 }
-
-/* Тихая смена цифр без скачка интерфейса */
 
 /* Тихая смена цифр без скачка интерфейса */
 .count-change {
@@ -391,7 +389,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell,
+  .cell-dimple,
   .count-change {
     animation: none !important;
   }
@@ -963,6 +961,17 @@ function renderWorkout() {
 
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
+    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+    const gradient = document.createElementNS("http://www.w3.org/2000/svg","radialGradient");
+    gradient.setAttribute("id","pressGradient");
+    gradient.innerHTML = `
+      <stop offset="0%" stop-color="#24231f" stop-opacity=".34"/>
+      <stop offset="48%" stop-color="#24231f" stop-opacity=".16"/>
+      <stop offset="100%" stop-color="#24231f" stop-opacity="0"/>
+    `;
+    defs.appendChild(gradient);
+    svg.appendChild(defs);
+
     map.cells.forEach((cell,i)=>{
 
       const rect = document.createElementNS(
@@ -1134,17 +1143,16 @@ function addRep(mapIndex,cellIndex) {
     `[data-cell="${cellIndex}"]`
   );
 
-  if (rect) {
-    // Короткое тактильное состояние: тон и край меняются, геометрия остаётся неподвижной.
-    rect.setAttribute(
-      "class",
-      cell[2] ? "cell filled cell-press" : "cell cell-press"
-    );
-
-    window.setTimeout(() => {
-      if (!rect.isConnected) return;
-      rect.setAttribute("class", cell[2] ? "cell filled" : "cell");
-    }, 135);
+  if (rect && svg) {
+    // Полупрозрачное мягкое пятно появляется в центре клетки и растворяется.
+    const dimple = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dimple.setAttribute("cx",cell[0]*CELL + CELL/2);
+    dimple.setAttribute("cy",cell[1]*CELL + CELL/2);
+    dimple.setAttribute("r",CELL*.53);
+    dimple.setAttribute("class","cell-dimple");
+    svg.appendChild(dimple);
+    dimple.addEventListener("animationend",()=>dimple.remove(),{once:true});
+    window.setTimeout(()=>dimple.remove(),520);
   }
 
   if (cell[2]) playTone(520, .045, .016);
