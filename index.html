@@ -985,7 +985,7 @@ function makeTerrainTexture(seed = 9137) {
       const h=heightAt(x,y);
       const z=h*104;
       // Небольшой наклон камеры сверху: высота действительно смещает геометрию.
-      row.push({x:x+z*.055,y:y-z*.34,z,h});
+      row.push({x:x+z*.055,y:y-z*.34,z,h,wx:x,wy:y});
     }
     vertices.push(row);
   }
@@ -994,8 +994,8 @@ function makeTerrainTexture(seed = 9137) {
   light.x/=lightLen; light.y/=lightLen; light.z/=lightLen;
 
   function drawTriangle(a,b,c) {
-    const ux=b.x-a.x, uy=b.y-a.y, uz=b.z-a.z;
-    const vx=c.x-a.x, vy=c.y-a.y, vz=c.z-a.z;
+    const ux=b.wx-a.wx, uy=b.wy-a.wy, uz=b.z-a.z;
+    const vx=c.wx-a.wx, vy=c.wy-a.wy, vz=c.z-a.z;
     let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
     const len=Math.hypot(nx,ny,nz)||1;
     nx/=len; ny/=len; nz/=len;
