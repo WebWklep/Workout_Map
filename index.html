@@ -461,8 +461,8 @@ button {
 }
 
 @keyframes outlineClaim {
-  0% { stroke: #55534f; stroke-width: 1.25; opacity: .8; }
-  100% { stroke: #85837d; stroke-width: .9; opacity: 1; }
+  0% { stroke: var(--cell); stroke-width: .9; opacity: .8; }
+  100% { stroke: var(--cell); stroke-width: .62; opacity: 1; }
 }
 
 /* КОНТУР */
@@ -470,16 +470,16 @@ button {
 .outline {
   pointer-events: none;
   fill: none;
-  stroke: #85837d;
-  stroke-width: .9;
+  stroke: var(--cell);
+  stroke-width: .62;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
 
-.outline-ghost {
-  stroke: #aaa79f;
-  stroke-width: .72;
-  opacity: .62;
+.outline-print-slip {
+  stroke: var(--cell);
+  stroke-width: .62;
+  opacity: .42;
 }
 
 .footer {
@@ -1076,14 +1076,44 @@ function createMapSection(map,mapIndex) {
 
   outline.setAttribute("d",makeOutline(map.cells));
   outline.setAttribute("class","outline");
+  svg.appendChild(outline);
 
-  // Второй печатный проход слегка смещён: заметен на стыках силуэта,
-  // но не размывает и не затрагивает сами клетки.
-  const ghostOutline = document.createElementNS("http://www.w3.org/2000/svg","path");
-  ghostOutline.setAttribute("d",makeOutline(map.cells));
-  ghostOutline.setAttribute("class","outline outline-ghost");
-  ghostOutline.setAttribute("transform","translate(1.15 -0.8)");
-  svg.append(ghostOutline,outline);
+  // Локальное несовмещение печатного слоя появляется только у карт,
+  // которые действительно доходят до левого или правого края экрана.
+  const touchesScreenEdge = map.cells.some(cell =>
+    cell[0] === 0 || cell[0] === COLS - 1
+  );
+
+  if (touchesScreenEdge) {
+    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+    const clip = document.createElementNS("http://www.w3.org/2000/svg","clipPath");
+    const clipId = `edge-print-${mapIndex}`;
+    clip.setAttribute("id",clipId);
+
+    const edgeBand = CELL * 1.6;
+    const leftBand = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    leftBand.setAttribute("x","0");
+    leftBand.setAttribute("y","0");
+    leftBand.setAttribute("width",edgeBand);
+    leftBand.setAttribute("height",H);
+
+    const rightBand = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rightBand.setAttribute("x",W-edgeBand);
+    rightBand.setAttribute("y","0");
+    rightBand.setAttribute("width",edgeBand);
+    rightBand.setAttribute("height",H);
+
+    clip.append(leftBand,rightBand);
+    defs.appendChild(clip);
+    svg.appendChild(defs);
+
+    const printSlip = document.createElementNS("http://www.w3.org/2000/svg","path");
+    printSlip.setAttribute("d",makeOutline(map.cells));
+    printSlip.setAttribute("class","outline-print-slip");
+    printSlip.setAttribute("clip-path",`url(#${clipId})`);
+    printSlip.setAttribute("transform","translate(1.1 -0.35)");
+    svg.appendChild(printSlip);
+  }
 
   // Определяем ячейку по координатам касания, а не по event.target.
   svg.addEventListener("pointerdown",event=>{
