@@ -152,6 +152,8 @@ button {
 #exerciseList {
   display: flex;
   flex-direction: column;
+  width: calc(100% + 24px);
+  margin-left: -12px;
 }
 
 #exerciseList::before {
@@ -167,10 +169,10 @@ button {
 
 .exercise {
   display: grid;
-  grid-template-columns: minmax(0,1fr) 38px 38px;
+  grid-template-columns: minmax(0,1fr) 38px;
   align-items: center;
-  gap: 8px;
-  padding: 2px 0;
+  gap: 12px;
+  padding: 2px 8px;
   border-bottom: 0;
 }
 
