@@ -167,19 +167,19 @@ button {
 
 .exercise {
   display: grid;
-  grid-template-columns: minmax(0,1fr) auto 38px;
+  grid-template-columns: minmax(0,1fr) 28px 38px;
   align-items: center;
   gap: 8px;
-  padding: 3px 0;
+  padding: 2px 0;
   border-bottom: 0;
 }
 
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.08;
   font-weight: 500;
-  letter-spacing: -.045em;
+  letter-spacing: -.055em;
   text-align: left;
   overflow-wrap: anywhere;
   padding: 7px 0;
@@ -189,10 +189,21 @@ button {
 
 .exercise-percent {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   letter-spacing: .015em;
   color: #96938c;
+  text-align: right;
+}
+
+.exercise-mark {
+  display: block;
+  width: 2px;
+  height: 13px;
+  justify-self: end;
+  background: #e4e2dc;
+  transform-origin: center bottom;
+  transition: height .28s cubic-bezier(.2,.65,.3,1), background-color .28s ease;
 }
 
 .row-action {
@@ -917,6 +928,13 @@ function renderHome() {
     percent.className = "exercise-percent";
     percent.textContent = getProgress(exercise)+"%";
 
+    const mark = document.createElement("span");
+    mark.className = "exercise-mark";
+    mark.setAttribute("aria-hidden","true");
+    const progress = Math.max(0,Math.min(100,getProgress(exercise)));
+    mark.style.height = (3 + progress * .12).toFixed(1) + "px";
+    if (progress >= 100) mark.style.backgroundColor = "#55534f";
+
     const del = document.createElement("button");
     del.className = "row-action delete";
     del.type = "button";
@@ -934,7 +952,7 @@ function renderHome() {
       renderHome();
     };
 
-    row.append(name,percent,del);
+    row.append(name,percent,mark,del);
     list.appendChild(row);
   });
 }
