@@ -1074,28 +1074,33 @@ function createMapSection(map,mapIndex) {
   outline.setAttribute("class","outline");
   svg.appendChild(outline);
 
-  // Аналоговый скан: на картах, доходящих до бокового края,
-  // узкая полоса клеток получает едва заметный сдвиг подачи бумаги.
+  // Analog Scan: заметный, но локальный срыв подачи печатного слоя
+  // у края. Деформация затухает внутрь острова, не затрагивая остальные карты.
   const touchesLeft = map.cells.some(cell => cell[0] === 0);
   const touchesRight = map.cells.some(cell => cell[0] === COLS - 1);
 
   if (touchesLeft || touchesRight) {
-    const scanSide = touchesLeft ? "left" : "right";
+    // Если остров касается обоих краёв, выбираем только один — эффект остаётся акцентом.
+    const scanSide = touchesLeft && touchesRight
+      ? (mapIndex % 2 === 0 ? "left" : "right")
+      : (touchesLeft ? "left" : "right");
     const phase = (map.cells.length % 7) * .47 + mapIndex * .31;
+    const falloffs = [1, .78, .48, .2];
 
     map.cells.forEach((cell,i) => {
       const distance = scanSide === "left" ? cell[0] : COLS - 1 - cell[0];
-      if (distance > 2) return;
+      if (distance > 3) return;
 
       const rect = svg.querySelector(`[data-cell="${i}"]`);
       if (!rect) return;
 
-      // Сдвиг плавно затухает за три колонки, а лёгкая вариация
-      // по вертикали имитирует неровную подачу листа через сканер.
-      const falloff = [1, .66, .28][distance];
-      const wave = Math.sin(cell[1] * .72 + phase) * 1.05;
+      // Неровная горизонтальная волна: отдельные строки слегка расходятся,
+      // создавая ощущение смещения слоя при сканировании бумаги.
+      const falloff = falloffs[distance];
+      const wave = Math.sin(cell[1] * .58 + phase) * 3.1
+        + Math.sin(cell[1] * .19 - phase * .7) * 1.15;
       const drift = wave * falloff;
-      const stretch = (distance === 0 ? .85 : distance === 1 ? .5 : .2) * falloff;
+      const stretch = (distance === 0 ? 2.8 : distance === 1 ? 2.0 : distance === 2 ? 1.15 : .45) * falloff;
 
       const baseX = cell[0] * CELL - .25;
       const baseWidth = CELL + .5;
