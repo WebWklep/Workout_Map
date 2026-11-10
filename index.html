@@ -767,113 +767,197 @@ function starText(text) {
 
 function randomIsland() {
 
-  // Архитектурный силуэт: крупная ось + смещённые блоки,
-  // которые пересекаются и собираются в одну цельную территорию.
-  const cells = new Map();
+  const cells = [];
+
+  const seed = Math.random() * 10000;
+
+  const mode = Math.floor(Math.random() * 7);
+
+  const blobs = [];
+
   const rand = (a,b) => a + Math.random() * (b-a);
-  const int = (a,b) => Math.floor(rand(a,b+1));
 
-  const vertical = Math.random() < .74;
-  const rects = [];
+  // Разные композиции
 
-  function addRect(x,y,w,h) {
-    rects.push({x,y,w,h});
-    for (let yy=y; yy<y+h; yy++) {
-      for (let xx=x; xx<x+w; xx++) {
-        if (xx >= 1 && xx < COLS-1 && yy >= 1 && yy < ROWS-1) {
-          cells.set(`${xx},${yy}`,[xx,yy,false]);
-        }
+  let count = 1;
+
+  if (mode === 1) count = 2;
+  if (mode === 2) count = 3;
+  if (mode === 3) count = 4;
+  if (mode === 4) count = 2;
+  if (mode === 5) count = 5;
+  if (mode === 6) count = 3;
+
+  // Основное направление территории
+
+  let angle = rand(0,Math.PI*2);
+
+  if (mode === 1) angle = 0;
+  if (mode === 2) angle = Math.PI/2;
+  if (mode === 3) angle = rand(0,Math.PI);
+  if (mode === 4) angle = rand(0,Math.PI*2);
+
+  const horizontal = Math.cos(angle);
+  const vertical = Math.sin(angle);
+
+  // Композиция строится вокруг внутреннего пространства:
+  // 60% центральных форм, 25% касаний одного края, 15% — двух краёв.
+  const edgeMode = Math.random() < .40;
+  const edgePair = edgeMode && Math.random() < .375;
+  const edgeAxis = Math.random() < .5 ? "x" : "y";
+  const edgeSign = Math.random() < .5 ? -1 : 1;
+  const secondEdgeSign = Math.random() < .5 ? -1 : 1;
+
+  let centerX = rand(10.0,12.0);
+  let centerY = rand(12.5,15.0);
+
+  if (edgeMode && edgePair) {
+    // Двойное касание остаётся редким композиционным акцентом.
+    centerX = edgeSign < 0 ? 3.7 : COLS - 3.7;
+    centerY = secondEdgeSign < 0 ? 3.8 : ROWS - 3.8;
+  } else if (edgeMode && edgeAxis === "x") {
+    centerX = edgeSign < 0 ? 3.5 : COLS - 3.5;
+    centerY = rand(7,21);
+  } else if (edgeMode && edgeAxis === "y") {
+    centerY = edgeSign < 0 ? 3.8 : ROWS - 3.8;
+    centerX = rand(6,16);
+  }
+
+  // Создание отдельных массивов
+
+  for (let i=0;i<count;i++) {
+
+    let t = count === 1 ? 0 : (i/(count-1)-.5);
+
+    let x = centerX + horizontal*t*11;
+    let y = centerY + vertical*t*15;
+
+    // Первый массив задаёт основной силуэт композиции.
+    if (i === 0 && edgeMode) {
+      x = centerX;
+      y = centerY;
+    }
+
+    if (mode === 5) {
+      x += rand(-3.2,3.2);
+      y += rand(-3.5,3.5);
+    }
+
+    if (mode === 6) {
+      x += rand(-2.2,2.2);
+      y += rand(-4.2,4.2);
+    }
+
+    // Центральные формы остаются крупными, но получают безопасный отступ от рамки.
+    if (!edgeMode) {
+      x = Math.max(6.8,Math.min(COLS-6.8,x));
+      y = Math.max(7.8,Math.min(ROWS-7.8,y));
+    }
+
+    const rx = edgeMode ? rand(5.2,8.4) : rand(5.0,6.8);
+    const ry = edgeMode ? rand(5.4,9.2) : rand(5.2,7.0);
+
+    blobs.push({
+      x,
+      y,
+      rx: (i === 0 && edgeMode) ? rand(edgePair ? 8.0 : 7.8,9.4) : rx,
+      ry: (i === 0 && edgeMode) ? rand(edgePair ? 8.0 : 7.6,9.6) : ry,
+      rotation: rand(0,Math.PI*2),
+      phase: rand(0,Math.PI*2),
+      waves: rand(.08,.24),
+      lobes: 2+Math.floor(Math.random()*5)
+    });
+  }
+
+  // Иногда создаём длинную перемычку
+
+  const bridge = mode === 1 || mode === 3 || mode === 6;
+
+  function insideBlob(x,y,b) {
+
+    const dx = x-b.x;
+    const dy = y-b.y;
+
+    const cos = Math.cos(b.rotation);
+    const sin = Math.sin(b.rotation);
+
+    const rx = dx*cos + dy*sin;
+    const ry = -dx*sin + dy*cos;
+
+    const nx = rx/b.rx;
+    const ny = ry/b.ry;
+
+    const angle = Math.atan2(ny,nx);
+
+    const radius = Math.sqrt(nx*nx+ny*ny);
+
+    const wave =
+      b.waves*Math.sin(angle*b.lobes+b.phase) +
+      b.waves*.45*Math.cos(angle*7-b.phase);
+
+    return radius < .86 + wave;
+  }
+
+  function inside(x,y) {
+
+    let result = false;
+
+    for (const b of blobs) {
+      if (insideBlob(x,y,b)) {
+        result = true;
+        break;
       }
     }
+
+    if (!result && bridge && count > 1) {
+
+      const dx = x-centerX;
+      const dy = y-centerY;
+
+      const along = dx*horizontal + dy*vertical;
+      const across = -dx*vertical + dy*horizontal;
+
+      if (
+        Math.abs(along)<10 &&
+        Math.abs(across)<1.25
+      ) {
+        result = true;
+      }
+    }
+
+    // Неровность края
+
+    if (result) {
+
+      const noise =
+        Math.sin(x*.9+seed)*.045 +
+        Math.cos(y*.8-seed)*.045 +
+        Math.sin((x+y)*.5+seed)*.035;
+
+      if (Math.random() < .025) result=false;
+      else if (noise < -.07 && Math.random()<.15) result=false;
+    }
+
+    return result;
   }
 
-  if (vertical) {
-    const spineW = int(4,6);
-    const spineH = int(13,17);
-    const spineX = int(8, COLS-8-spineW);
-    const spineY = int(5, ROWS-5-spineH);
-    addRect(spineX,spineY,spineW,spineH);
+  for (let y=0;y<ROWS;y++) {
+    for (let x=0;x<COLS;x++) {
 
-    // Боковые объёмы разной высоты создают ступенчатый ритм.
-    const levels = [
-      spineY + int(1,3),
-      spineY + int(5,8),
-      spineY + spineH - int(4,6)
-    ];
-    const sides = Math.random() < .5 ? [-1,1] : [1,-1];
+      if (inside(x,y)) {
+        cells.push([x,y,false]);
+      }
 
-    const wingCount = int(2,3);
-    for (let i=0;i<wingCount;i++) {
-      const side = sides[i % 2];
-      const w = int(3,6);
-      const h = int(3,6);
-      const y = Math.max(2,Math.min(ROWS-h-2,levels[i]));
-      const x = side < 0 ? spineX-w+1 : spineX+spineW-1;
-      addRect(x,y,w,h);
-    }
-
-    // Небольшой сдвинутый верх или цоколь нарушает симметрию.
-    if (Math.random() < .78) {
-      const w = int(3,6);
-      const x = Math.max(2,Math.min(COLS-w-2,spineX+int(-2,spineW-1)));
-      const y = Math.random() < .5 ? spineY-int(1,2) : spineY+spineH-1;
-      addRect(x,Math.max(2,Math.min(ROWS-4,y)),w,int(3,4));
-    }
-
-  } else {
-    const spineW = int(13,17);
-    const spineH = int(4,6);
-    const spineX = int(3, COLS-3-spineW);
-    const spineY = int(10, ROWS-7-spineH);
-    addRect(spineX,spineY,spineW,spineH);
-
-    const levels = [
-      spineX + int(1,3),
-      spineX + int(5,8),
-      spineX + spineW - int(4,6)
-    ];
-    const sides = Math.random() < .5 ? [-1,1] : [1,-1];
-
-    const wingCount = int(2,3);
-    for (let i=0;i<wingCount;i++) {
-      const side = sides[i % 2];
-      const w = int(3,6);
-      const h = int(3,6);
-      const x = Math.max(2,Math.min(COLS-w-2,levels[i]));
-      const y = side < 0 ? spineY-h+1 : spineY+spineH-1;
-      addRect(x,y,w,h);
-    }
-
-    if (Math.random() < .72) {
-      const h = int(3,5);
-      const y = Math.max(2,Math.min(ROWS-h-2,spineY+int(-2,spineH-1)));
-      const x = Math.random() < .5 ? spineX-int(1,2) : spineX+spineW-1;
-      addRect(Math.max(2,Math.min(COLS-4,x)),y,int(3,4),h);
     }
   }
 
-  // Один небольшой вырез добавляет характер, не разрушая цельность формы.
-  const all = [...cells.values()];
-  if (all.length > 85 && Math.random() < .58) {
-    const edge = all.filter(([x,y]) =>
-      !cells.has(`${x-1},${y}`) ||
-      !cells.has(`${x+1},${y}`) ||
-      !cells.has(`${x},${y-1}`) ||
-      !cells.has(`${x},${y+1}`)
-    );
-    const candidate = edge[int(0,edge.length-1)];
-    if (candidate) {
-      const [x,y] = candidate;
-      const neighbors = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]
-        .filter(([nx,ny])=>cells.has(`${nx},${ny}`)).length;
-      if (neighbors <= 2) cells.delete(`${x},${y}`);
-    }
+  // Защита от слишком маленькой карты
+
+  if (cells.length < 45) {
+    return randomIsland();
   }
 
-  const result = [...cells.values()];
-  if (result.length < 45) return randomIsland();
-
-  return result;
+  return cells;
 }
 
 /* КОНТУР */
