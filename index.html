@@ -232,7 +232,7 @@ button {
   flex-direction: column;
   align-items: stretch;
   min-width: 0;
-  gap: 10px;
+  gap: 7px;
   padding: 10px 7px 13px;
   background-color: var(--paper);
   background-image:
@@ -275,7 +275,7 @@ button {
 .atlas-islands {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 2px;
   width: 100%;
 }
 .atlas-island {
@@ -1075,7 +1075,21 @@ function renderHome() {
 
     (exercise.maps || []).forEach(map=>{
       const preview = document.createElementNS("http://www.w3.org/2000/svg","svg");
-      preview.setAttribute("viewBox","0 0 " + W + " " + H);
+      const xs = map.cells.map(cell=>cell[0]);
+      const ys = map.cells.map(cell=>cell[1]);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const cropPad = 1.25;
+      const cropX = Math.max(0,minX-cropPad);
+      const cropY = Math.max(0,minY-cropPad);
+      const cropRight = Math.min(COLS,maxX+1+cropPad);
+      const cropBottom = Math.min(ROWS,maxY+1+cropPad);
+      preview.setAttribute(
+        "viewBox",
+        `${cropX*CELL} ${cropY*CELL} ${(cropRight-cropX)*CELL} ${(cropBottom-cropY)*CELL}`
+      );
       preview.setAttribute("class","atlas-island");
       preview.setAttribute("role","button");
       preview.setAttribute("aria-label",starText(exercise.name));
