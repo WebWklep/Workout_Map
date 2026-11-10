@@ -291,11 +291,11 @@ button {
 
 .map-title {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  font-size: 22px;
+  font-size: clamp(22px, 6.2vw, 27px);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: -.035em;
-  color: #5b5953;
+  letter-spacing: -.05em;
+  color: #55534e;
   overflow-wrap: anywhere;
   text-shadow: none;
   min-width: 0;
@@ -313,11 +313,11 @@ button {
   gap: 12px;
   margin: 0 8px 20px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
   text-transform: uppercase;
-  color: #929088;
-  letter-spacing: .035em;
+  color: #96938c;
+  letter-spacing: .085em;
 }
 
 .map-progress-value {
@@ -435,15 +435,34 @@ button {
   }
 }
 
-/* Короткий визуальный отклик завершённой территории */
+/* Завершённая территория на мгновение собирается в цельную форму */
 .map.just-claimed svg {
   animation: claimSettle .65s ease-out both;
 }
 
+.map.just-claimed .cell.filled {
+  animation: cellClaim .65s ease-out both;
+}
+
+.map.just-claimed .outline {
+  animation: outlineClaim .65s ease-out both;
+}
+
 @keyframes claimSettle {
   0% { filter: contrast(1); }
-  45% { filter: contrast(1.07); }
+  42% { filter: contrast(1.065); }
   100% { filter: contrast(1); }
+}
+
+@keyframes cellClaim {
+  0% { fill: #77756f; }
+  48% { fill: #686660; }
+  100% { fill: var(--cell); }
+}
+
+@keyframes outlineClaim {
+  0% { stroke: #55534f; stroke-width: 1.25; opacity: .8; }
+  100% { stroke: #85837d; stroke-width: .9; opacity: 1; }
 }
 
 /* КОНТУР */
@@ -657,17 +676,23 @@ function randomIsland() {
   // Большинство островов намеренно выходят к одной из сторон карты.
   // Иногда композиция остаётся центральной — это сохраняет разнообразие.
   const edgeMode = Math.random() < .78;
+  const edgePair = edgeMode && Math.random() < .28;
   const edgeAxis = Math.random() < .5 ? "x" : "y";
   const edgeSign = Math.random() < .5 ? -1 : 1;
+  const secondEdgeSign = Math.random() < .5 ? -1 : 1;
 
   let centerX = 10.5;
   let centerY = 13.5;
 
-  if (edgeMode && edgeAxis === "x") {
-    centerX = edgeSign < 0 ? 3.8 : 18.2;
-    centerY = rand(8,19);
+  if (edgeMode && edgePair) {
+    // Часть территорий выходит сразу к двум соседним сторонам.
+    centerX = edgeSign < 0 ? 1.1 : COLS - 1.1;
+    centerY = secondEdgeSign < 0 ? 1.1 : ROWS - 1.1;
+  } else if (edgeMode && edgeAxis === "x") {
+    centerX = edgeSign < 0 ? 1.1 : COLS - 1.1;
+    centerY = rand(7,21);
   } else if (edgeMode && edgeAxis === "y") {
-    centerY = edgeSign < 0 ? 4.8 : 22.2;
+    centerY = edgeSign < 0 ? 1.1 : ROWS - 1.1;
     centerX = rand(6,16);
   }
 
@@ -708,8 +733,8 @@ function randomIsland() {
     blobs.push({
       x,
       y,
-      rx: (i === 0 && edgeMode) ? rand(7.2,9.0) : rx,
-      ry: (i === 0 && edgeMode) ? rand(6.8,9.4) : ry,
+      rx: (i === 0 && edgeMode) ? rand(edgePair ? 8.0 : 7.8,9.4) : rx,
+      ry: (i === 0 && edgeMode) ? rand(edgePair ? 8.0 : 7.6,9.6) : ry,
       rotation: rand(0,Math.PI*2),
       phase: rand(0,Math.PI*2),
       waves: rand(.08,.24),
