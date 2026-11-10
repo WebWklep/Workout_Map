@@ -68,7 +68,7 @@ button {
 
 #app {
   min-height: 100vh;
-  padding: 25px 20px;
+  padding: 10px 8px 25px;
   position: relative;
   z-index: 1;
 }
@@ -108,16 +108,16 @@ button {
 
 .brand-main {
   font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  font-size: 28px;
-  line-height: .88;
+  font-size: 36px;
+  line-height: .82;
   font-weight: 750;
-  letter-spacing: -.075em;
+  letter-spacing: -.085em;
 }
 
 .brand-sub {
-  margin-top: 4px;
+  margin-top: 5px;
   font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1;
   font-weight: 600;
   letter-spacing: .34em;
@@ -125,6 +125,22 @@ button {
 }
 
 #exerciseCount {
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  padding-top: 1px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  line-height: .9;
+  font-weight: 400;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  color: #4b4a45;
+}
+
+/* legacy exercise count hidden */
+#exerciseCount-old {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
