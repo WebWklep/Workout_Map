@@ -179,8 +179,8 @@ button {
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
-  line-height: .78;
-  font-weight: 500;
+  line-height: .68;
+  font-weight: 700;
   letter-spacing: -.085em;
   text-align: left;
   overflow-wrap: anywhere;
@@ -951,7 +951,10 @@ function renderHome() {
 
     const percent = document.createElement("span");
     percent.className = "exercise-percent";
-    percent.textContent = String(exercise.reps || 0).padStart(3,"0");
+    const filledCells = exercise.maps.reduce(
+      (total,map)=>total+map.cells.filter(cell=>cell[2]).length,0
+    );
+    percent.textContent = String(filledCells);
 
     const del = document.createElement("button");
     del.className = "row-action delete";
