@@ -224,9 +224,6 @@ button {
 #trainingAtlas::-webkit-scrollbar { display: none; }
 
 .atlas-column {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
   display: flex;
   flex: 0 0 31vw;
   flex-direction: column;
@@ -234,32 +231,6 @@ button {
   min-width: 0;
   gap: 7px;
   padding: 10px 7px 13px;
-  background-color: var(--paper);
-  background-image:
-    linear-gradient(90deg,
-      rgba(62,58,50,.055) 0%,
-      rgba(255,255,255,.18) 7%,
-      rgba(255,255,255,.58) 48%,
-      rgba(62,58,50,.035) 100%),
-    linear-gradient(180deg,
-      rgba(255,255,255,.72) 0%,
-      rgba(238,235,228,.10) 48%,
-      rgba(255,255,255,.52) 100%);
-  box-shadow:
-    0 3px 9px rgba(52,48,40,.055),
-    inset 1px 0 rgba(255,255,255,.9),
-    inset -1px 0 rgba(75,70,60,.055);
-}
-.atlas-column::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: .17;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='.22'/%3E%3C/svg%3E");
-  background-size: 150px 150px;
-  mix-blend-mode: multiply;
 }
 .atlas-title {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
