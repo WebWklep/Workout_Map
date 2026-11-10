@@ -474,7 +474,12 @@ button {
   stroke-width: .9;
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
-  filter: none;
+}
+
+.outline-ghost {
+  stroke: #aaa79f;
+  stroke-width: .72;
+  opacity: .62;
 }
 
 .footer {
@@ -681,8 +686,8 @@ function randomIsland() {
   const edgeSign = Math.random() < .5 ? -1 : 1;
   const secondEdgeSign = Math.random() < .5 ? -1 : 1;
 
-  let centerX = rand(7.2,14.8);
-  let centerY = rand(8.5,18.5);
+  let centerX = rand(10.0,12.0);
+  let centerY = rand(12.5,15.0);
 
   if (edgeMode && edgePair) {
     // Двойное касание остаётся редким композиционным акцентом.
@@ -712,18 +717,23 @@ function randomIsland() {
     }
 
     if (mode === 5) {
-      x += rand(-5,5);
-      y += rand(-5,5);
+      x += rand(-3.2,3.2);
+      y += rand(-3.5,3.5);
     }
 
     if (mode === 6) {
-      x += rand(-3,3);
-      y += rand(-7,7);
+      x += rand(-2.2,2.2);
+      y += rand(-4.2,4.2);
     }
 
-    // Увеличиваем базовый масштаб: маленькие острова будут встречаться реже.
-    const rx = rand(5.2,8.4);
-    const ry = rand(5.4,9.2);
+    // Центральные формы остаются крупными, но получают безопасный отступ от рамки.
+    if (!edgeMode) {
+      x = Math.max(6.8,Math.min(COLS-6.8,x));
+      y = Math.max(7.8,Math.min(ROWS-7.8,y));
+    }
+
+    const rx = edgeMode ? rand(5.2,8.4) : rand(5.0,6.8);
+    const ry = edgeMode ? rand(5.4,9.2) : rand(5.2,7.0);
 
     blobs.push({
       x,
@@ -1066,29 +1076,14 @@ function createMapSection(map,mapIndex) {
 
   outline.setAttribute("d",makeOutline(map.cells));
   outline.setAttribute("class","outline");
-  outline.setAttribute("filter","url(#printDrift)");
-  const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
-  const filter = document.createElementNS("http://www.w3.org/2000/svg","filter");
-  filter.setAttribute("id","printDrift");
-  filter.setAttribute("x","-3%");
-  filter.setAttribute("y","-3%");
-  filter.setAttribute("width","106%");
-  filter.setAttribute("height","106%");
-  const turbulence = document.createElementNS("http://www.w3.org/2000/svg","feTurbulence");
-  turbulence.setAttribute("type","fractalNoise");
-  turbulence.setAttribute("baseFrequency",".055");
-  turbulence.setAttribute("numOctaves","1");
-  turbulence.setAttribute("seed",String(mapIndex + 7));
-  turbulence.setAttribute("result","grain");
-  const displacement = document.createElementNS("http://www.w3.org/2000/svg","feDisplacementMap");
-  displacement.setAttribute("in","SourceGraphic");
-  displacement.setAttribute("in2","grain");
-  displacement.setAttribute("scale",".65");
-  displacement.setAttribute("xChannelSelector","R");
-  displacement.setAttribute("yChannelSelector","G");
-  filter.append(turbulence,displacement);
-  defs.appendChild(filter);
-  svg.append(defs,outline);
+
+  // Второй печатный проход слегка смещён: заметен на стыках силуэта,
+  // но не размывает и не затрагивает сами клетки.
+  const ghostOutline = document.createElementNS("http://www.w3.org/2000/svg","path");
+  ghostOutline.setAttribute("d",makeOutline(map.cells));
+  ghostOutline.setAttribute("class","outline outline-ghost");
+  ghostOutline.setAttribute("transform","translate(1.15 -0.8)");
+  svg.append(ghostOutline,outline);
 
   // Определяем ячейку по координатам касания, а не по event.target.
   svg.addEventListener("pointerdown",event=>{
