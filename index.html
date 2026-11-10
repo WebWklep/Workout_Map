@@ -168,52 +168,56 @@ button {
 #exerciseList {
   display: flex;
   flex-direction: column;
-  width: calc(100% + 24px);
-  margin-left: -12px;
+  width: 100%;
+  margin: 0;
+  gap: 27px;
 }
 
-#exerciseList::before {
-  content: "TRAINING INDEX";
-  display: block;
-  margin-bottom: 17px;
-  color: #96938c;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: .16em;
-}
+#exerciseList::before { content: none; }
 
 .exercise {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) 38px;
-  align-items: center;
-  gap: 12px;
-  padding: 0 8px;
-  border-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: 0;
 }
 
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  font-size: 15px;
-  line-height: .68;
+  width: 100%;
+  font-size: 21px;
+  line-height: .88;
   font-weight: 700;
-  letter-spacing: -.085em;
+  letter-spacing: -.075em;
   text-align: left;
   overflow-wrap: anywhere;
-  padding: 3px 0;
+  padding: 0;
   color: var(--cell);
   text-transform: uppercase;
   text-shadow: none;
 }
 
-.exercise-percent {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 9px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .015em;
-  color: #85847e;
-  text-align: right;
+.exercise-percent { display: none; }
+
+.exercise-islands {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
 }
+
+.exercise-island {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.exercise-island .cell { pointer-events: none; }
 
 .row-action {
   display: grid;
@@ -965,31 +969,57 @@ function renderHome() {
       openExercise(exercise.id);
     };
 
-    const percent = document.createElement("span");
-    percent.className = "exercise-percent";
-    const filledCells = exercise.maps.reduce(
-      (total,map)=>total+map.cells.filter(cell=>cell[2]).length,0
-    );
-    percent.textContent = String(filledCells);
+    const islands = document.createElement("div");
+    islands.className = "exercise-islands";
 
-    const del = document.createElement("button");
-    del.className = "row-action delete";
-    del.type = "button";
-    del.textContent = "×";
+    (exercise.maps || []).forEach(map=>{
+      const preview = document.createElementNS("http://www.w3.org/2000/svg","svg");
+      preview.setAttribute("viewBox","0 0 " + W + " " + H);
+      preview.setAttribute("class","exercise-island");
+      preview.setAttribute("role","button");
+      preview.setAttribute("aria-label",starText(exercise.name));
+      preview.addEventListener("click",()=>{
+        if (deleteMode) {
+          if (!confirm("Удалить упражнение?")) return;
+          state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
+          save();
+          renderHome();
+          return;
+        }
+        openExercise(exercise.id);
+      });
 
-    del.onclick = ()=>{
+      map.cells.forEach(cell=>{
+        const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        rect.setAttribute("x",cell[0]*CELL-.25);
+        rect.setAttribute("y",cell[1]*CELL-.25);
+        rect.setAttribute("width",CELL+.5);
+        rect.setAttribute("height",CELL+.5);
+        rect.setAttribute("rx","1.15");
+        rect.setAttribute("ry","1.15");
+        rect.setAttribute("class",cell[2]?"cell filled":"cell");
+        preview.appendChild(rect);
+      });
 
-      if (!confirm("Удалить упражнение?")) return;
+      const outline = document.createElementNS("http://www.w3.org/2000/svg","path");
+      outline.setAttribute("d",makeOutline(map.cells));
+      outline.setAttribute("class","outline");
+      preview.appendChild(outline);
+      islands.appendChild(preview);
+    });
 
-      state.exercises = state.exercises.filter(
-        e=>e.id!==exercise.id
-      );
-
-      save();
-      renderHome();
+    name.onclick = ()=>{
+      if (deleteMode) {
+        if (!confirm("Удалить упражнение?")) return;
+        state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
+        save();
+        renderHome();
+        return;
+      }
+      openExercise(exercise.id);
     };
 
-    row.append(name,percent);
+    row.append(name,islands);
     row.classList.toggle("is-delete-mode",deleteMode);
     list.appendChild(row);
   });
