@@ -477,9 +477,13 @@ button {
 }
 
 .outline-print-slip {
+  pointer-events: none;
+  fill: none;
   stroke: var(--cell);
-  stroke-width: .62;
-  opacity: .42;
+  stroke-width: .78;
+  stroke-linecap: square;
+  opacity: .38;
+  vector-effect: non-scaling-stroke;
 }
 
 .footer {
@@ -1078,40 +1082,35 @@ function createMapSection(map,mapIndex) {
   outline.setAttribute("class","outline");
   svg.appendChild(outline);
 
-  // Локальное несовмещение печатного слоя появляется только у карт,
-  // которые действительно доходят до левого или правого края экрана.
-  const touchesScreenEdge = map.cells.some(cell =>
-    cell[0] === 0 || cell[0] === COLS - 1
-  );
+  // Короткие фрагменты контура слегка смещаются только там,
+  // где остров касается бокового края — как локальное несовмещение флексопечати.
+  const edgeCells = new Set(map.cells.map(cell => `${cell[0]},${cell[1]}`));
+  const slipLines = [];
+  const edgeSides = [
+    { x: 0, neighborX: -1, side: "left" },
+    { x: COLS - 1, neighborX: COLS, side: "right" }
+  ];
 
-  if (touchesScreenEdge) {
-    const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
-    const clip = document.createElementNS("http://www.w3.org/2000/svg","clipPath");
-    const clipId = `edge-print-${mapIndex}`;
-    clip.setAttribute("id",clipId);
+  for (const edge of edgeSides) {
+    for (let y = 0; y < ROWS; y++) {
+      if (!edgeCells.has(`${edge.x},${y}`)) continue;
+      if (edgeCells.has(`${edge.neighborX},${y}`)) continue;
 
-    const edgeBand = CELL * 1.6;
-    const leftBand = document.createElementNS("http://www.w3.org/2000/svg","rect");
-    leftBand.setAttribute("x","0");
-    leftBand.setAttribute("y","0");
-    leftBand.setAttribute("width",edgeBand);
-    leftBand.setAttribute("height",H);
+      // Не смещаем весь край: выбираем отдельные короткие участки.
+      if (Math.random() > .38) continue;
 
-    const rightBand = document.createElementNS("http://www.w3.org/2000/svg","rect");
-    rightBand.setAttribute("x",W-edgeBand);
-    rightBand.setAttribute("y","0");
-    rightBand.setAttribute("width",edgeBand);
-    rightBand.setAttribute("height",H);
+      const x = edge.side === "left" ? 0 : W;
+      const y1 = y * CELL + CELL * .18;
+      const y2 = y * CELL + CELL * .82;
+      slipLines.push(`M${x} ${y1}V${y2}`);
+    }
+  }
 
-    clip.append(leftBand,rightBand);
-    defs.appendChild(clip);
-    svg.appendChild(defs);
-
+  if (slipLines.length) {
     const printSlip = document.createElementNS("http://www.w3.org/2000/svg","path");
-    printSlip.setAttribute("d",makeOutline(map.cells));
+    printSlip.setAttribute("d",slipLines.join(""));
     printSlip.setAttribute("class","outline-print-slip");
-    printSlip.setAttribute("clip-path",`url(#${clipId})`);
-    printSlip.setAttribute("transform","translate(1.1 -0.35)");
+    printSlip.setAttribute("transform","translate(1.05 -0.3)");
     svg.appendChild(printSlip);
   }
 
