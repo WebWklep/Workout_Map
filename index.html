@@ -673,26 +673,26 @@ function randomIsland() {
   const horizontal = Math.cos(angle);
   const vertical = Math.sin(angle);
 
-  // Большинство островов намеренно выходят к одной из сторон карты.
-  // Иногда композиция остаётся центральной — это сохраняет разнообразие.
-  const edgeMode = Math.random() < .78;
-  const edgePair = edgeMode && Math.random() < .28;
+  // Композиция строится вокруг внутреннего пространства:
+  // 60% центральных форм, 25% касаний одного края, 15% — двух краёв.
+  const edgeMode = Math.random() < .40;
+  const edgePair = edgeMode && Math.random() < .375;
   const edgeAxis = Math.random() < .5 ? "x" : "y";
   const edgeSign = Math.random() < .5 ? -1 : 1;
   const secondEdgeSign = Math.random() < .5 ? -1 : 1;
 
-  let centerX = 10.5;
-  let centerY = 13.5;
+  let centerX = rand(7.2,14.8);
+  let centerY = rand(8.5,18.5);
 
   if (edgeMode && edgePair) {
-    // Часть территорий выходит сразу к двум соседним сторонам.
-    centerX = edgeSign < 0 ? 1.1 : COLS - 1.1;
-    centerY = secondEdgeSign < 0 ? 1.1 : ROWS - 1.1;
+    // Двойное касание остаётся редким композиционным акцентом.
+    centerX = edgeSign < 0 ? 3.7 : COLS - 3.7;
+    centerY = secondEdgeSign < 0 ? 3.8 : ROWS - 3.8;
   } else if (edgeMode && edgeAxis === "x") {
-    centerX = edgeSign < 0 ? 1.1 : COLS - 1.1;
+    centerX = edgeSign < 0 ? 3.5 : COLS - 3.5;
     centerY = rand(7,21);
   } else if (edgeMode && edgeAxis === "y") {
-    centerY = edgeSign < 0 ? 1.1 : ROWS - 1.1;
+    centerY = edgeSign < 0 ? 3.8 : ROWS - 3.8;
     centerX = rand(6,16);
   }
 
@@ -705,15 +705,10 @@ function randomIsland() {
     let x = centerX + horizontal*t*11;
     let y = centerY + vertical*t*15;
 
-    // Первый массив закрепляет композицию у выбранного края.
+    // Первый массив задаёт основной силуэт композиции.
     if (i === 0 && edgeMode) {
-      if (edgeAxis === "x") {
-        x = centerX;
-        y = centerY;
-      } else {
-        x = centerX;
-        y = centerY;
-      }
+      x = centerX;
+      y = centerY;
     }
 
     if (mode === 5) {
@@ -836,6 +831,7 @@ function randomIsland() {
 
 /* КОНТУР */
 
+/* Едва заметное несовмещение печатных слоёв — только на линии контура. */
 function makeOutline(cells) {
 
   const set = new Set(
@@ -1070,7 +1066,29 @@ function createMapSection(map,mapIndex) {
 
   outline.setAttribute("d",makeOutline(map.cells));
   outline.setAttribute("class","outline");
-  svg.appendChild(outline);
+  outline.setAttribute("filter","url(#printDrift)");
+  const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+  const filter = document.createElementNS("http://www.w3.org/2000/svg","filter");
+  filter.setAttribute("id","printDrift");
+  filter.setAttribute("x","-3%");
+  filter.setAttribute("y","-3%");
+  filter.setAttribute("width","106%");
+  filter.setAttribute("height","106%");
+  const turbulence = document.createElementNS("http://www.w3.org/2000/svg","feTurbulence");
+  turbulence.setAttribute("type","fractalNoise");
+  turbulence.setAttribute("baseFrequency",".055");
+  turbulence.setAttribute("numOctaves","1");
+  turbulence.setAttribute("seed",String(mapIndex + 7));
+  turbulence.setAttribute("result","grain");
+  const displacement = document.createElementNS("http://www.w3.org/2000/svg","feDisplacementMap");
+  displacement.setAttribute("in","SourceGraphic");
+  displacement.setAttribute("in2","grain");
+  displacement.setAttribute("scale",".65");
+  displacement.setAttribute("xChannelSelector","R");
+  displacement.setAttribute("yChannelSelector","G");
+  filter.append(turbulence,displacement);
+  defs.appendChild(filter);
+  svg.append(defs,outline);
 
   // Определяем ячейку по координатам касания, а не по event.target.
   svg.addEventListener("pointerdown",event=>{
