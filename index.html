@@ -211,19 +211,20 @@ button {
 #trainingAtlas {
   display: flex;
   align-items: stretch;
-  gap: 9px;
+  gap: 5px;
   width: calc(100% + 16px);
   margin: 24px -8px 0;
   padding: 16px 8px 26px;
   overflow-x: auto;
   overflow-y: hidden;
-  background: #55534f;
+  background: var(--paper);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 #trainingAtlas::-webkit-scrollbar { display: none; }
 
 .atlas-column {
+  position: relative;
   display: flex;
   flex: 0 0 31vw;
   flex-direction: column;
@@ -231,7 +232,21 @@ button {
   min-width: 0;
   gap: 10px;
   padding: 10px 7px 13px;
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg,
+      rgba(62,58,50,.055) 0%,
+      rgba(255,255,255,.18) 7%,
+      rgba(255,255,255,.58) 48%,
+      rgba(62,58,50,.035) 100%),
+    linear-gradient(180deg,
+      rgba(255,255,255,.72) 0%,
+      rgba(238,235,228,.10) 48%,
+      rgba(255,255,255,.52) 100%);
+  box-shadow:
+    0 3px 9px rgba(52,48,40,.055),
+    inset 1px 0 rgba(255,255,255,.9),
+    inset -1px 0 rgba(75,70,60,.055);
 }
 .atlas-title {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
