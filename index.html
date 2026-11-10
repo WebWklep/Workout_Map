@@ -175,11 +175,11 @@ button {
 }
 
 .exercise-name {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 19px;
-  line-height: 1.12;
-  font-weight: 400;
-  letter-spacing: -.4px;
+  font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -.045em;
   text-align: left;
   overflow-wrap: anywhere;
   padding: 7px 0;
@@ -1074,41 +1074,6 @@ function createMapSection(map,mapIndex) {
   outline.setAttribute("class","outline");
   svg.appendChild(outline);
 
-  // Analog Scan: заметный, но локальный срыв подачи печатного слоя
-  // у края. Деформация затухает внутрь острова, не затрагивая остальные карты.
-  const touchesLeft = map.cells.some(cell => cell[0] === 0);
-  const touchesRight = map.cells.some(cell => cell[0] === COLS - 1);
-
-  if (touchesLeft || touchesRight) {
-    // Если остров касается обоих краёв, выбираем только один — эффект остаётся акцентом.
-    const scanSide = touchesLeft && touchesRight
-      ? (mapIndex % 2 === 0 ? "left" : "right")
-      : (touchesLeft ? "left" : "right");
-    const phase = (map.cells.length % 7) * .47 + mapIndex * .31;
-    const falloffs = [1, .78, .48, .2];
-
-    map.cells.forEach((cell,i) => {
-      const distance = scanSide === "left" ? cell[0] : COLS - 1 - cell[0];
-      if (distance > 3) return;
-
-      const rect = svg.querySelector(`[data-cell="${i}"]`);
-      if (!rect) return;
-
-      // Неровная горизонтальная волна: отдельные строки слегка расходятся,
-      // создавая ощущение смещения слоя при сканировании бумаги.
-      const falloff = falloffs[distance];
-      const wave = Math.sin(cell[1] * .58 + phase) * 3.1
-        + Math.sin(cell[1] * .19 - phase * .7) * 1.15;
-      const drift = wave * falloff;
-      const stretch = (distance === 0 ? 2.8 : distance === 1 ? 2.0 : distance === 2 ? 1.15 : .45) * falloff;
-
-      const baseX = cell[0] * CELL - .25;
-      const baseWidth = CELL + .5;
-
-      rect.setAttribute("x",baseX + drift - stretch * .5);
-      rect.setAttribute("width",baseWidth + stretch);
-    });
-  }
 
   // Определяем ячейку по координатам касания, а не по event.target.
   svg.addEventListener("pointerdown",event=>{
