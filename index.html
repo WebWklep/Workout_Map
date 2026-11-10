@@ -172,19 +172,19 @@ button {
   grid-template-columns: minmax(0,1fr) 38px;
   align-items: center;
   gap: 12px;
-  padding: 2px 8px;
+  padding: 0 8px;
   border-bottom: 0;
 }
 
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
-  line-height: .91;
+  line-height: .78;
   font-weight: 500;
-  letter-spacing: -.075em;
+  letter-spacing: -.085em;
   text-align: left;
   overflow-wrap: anywhere;
-  padding: 5px 0;
+  padding: 3px 0;
   color: var(--cell);
   text-transform: uppercase;
   text-shadow: none;
@@ -938,11 +938,20 @@ function renderHome() {
 
     name.textContent = starText(exercise.name);
 
-    name.onclick = ()=>openExercise(exercise.id);
+    name.onclick = ()=>{
+      if (deleteMode) {
+        if (!confirm("Удалить упражнение?")) return;
+        state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
+        save();
+        renderHome();
+        return;
+      }
+      openExercise(exercise.id);
+    };
 
     const percent = document.createElement("span");
     percent.className = "exercise-percent";
-    percent.textContent = getProgress(exercise)+"%";
+    percent.textContent = String(exercise.reps || 0).padStart(3,"0");
 
     const del = document.createElement("button");
     del.className = "row-action delete";
@@ -962,7 +971,7 @@ function renderHome() {
     };
 
     row.append(name,percent);
-    if (deleteMode) row.appendChild(del);
+    row.classList.toggle("is-delete-mode",deleteMode);
     list.appendChild(row);
   });
 }
