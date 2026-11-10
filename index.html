@@ -384,6 +384,16 @@ button {
   fill: var(--cell);
 }
 
+/* Короткий тактильный отклик клетки при касании */
+.cell.is-pressing {
+  fill: #bcbab3;
+  transition: fill .07s ease-out;
+}
+
+.cell.filled.is-pressing {
+  fill: #77756f;
+}
+
 
 /* Тихая смена цифр без скачка интерфейса */
 .count-change {
@@ -398,6 +408,7 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .cell,
+  .cell.is-pressing,
   .count-change,
   .map.is-entering svg {
     animation: none !important;
@@ -1025,6 +1036,17 @@ function createMapSection(map,mapIndex) {
 
     if (cellIndex < 0) return;
     event.preventDefault();
+
+    const rect = svg.querySelector(`[data-cell="${cellIndex}"]`);
+    if (rect) {
+      window.clearTimeout(rect._pressTimer);
+      rect.classList.add("is-pressing");
+      rect._pressTimer = window.setTimeout(()=>{
+        rect.classList.remove("is-pressing");
+        rect._pressTimer = null;
+      },120);
+    }
+
     addRep(mapIndex,cellIndex);
   });
 
