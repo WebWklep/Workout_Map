@@ -170,54 +170,91 @@ button {
   flex-direction: column;
   width: 100%;
   margin: 0;
-  gap: 27px;
+  gap: 0;
 }
 
 #exerciseList::before { content: none; }
 
 .exercise {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 7px;
-  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 38px;
+  align-items: center;
+  gap: 12px;
   padding: 0;
   border: 0;
 }
 
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  width: 100%;
-  font-size: 21px;
-  line-height: .88;
+  font-size: 15px;
+  line-height: .82;
   font-weight: 700;
-  letter-spacing: -.075em;
+  letter-spacing: -.085em;
   text-align: left;
   overflow-wrap: anywhere;
-  padding: 0;
+  padding: 5px 0;
   color: var(--cell);
   text-transform: uppercase;
   text-shadow: none;
 }
 
-.exercise-percent { display: none; }
-
-.exercise-islands {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
+.exercise-percent {
+  display: block;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .015em;
+  color: #85847e;
+  text-align: right;
 }
 
-.exercise-island {
+#trainingAtlas {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: calc(100% + 16px);
+  margin: 30px -8px 0;
+  padding: 0 8px 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#trainingAtlas::-webkit-scrollbar { display: none; }
+
+.atlas-column {
+  display: flex;
+  flex: 0 0 31vw;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  gap: 8px;
+}
+.atlas-title {
+  font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: .9;
+  font-weight: 700;
+  letter-spacing: -.075em;
+  text-transform: uppercase;
+  color: var(--cell);
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.atlas-islands {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+.atlas-island {
   display: block;
   width: 100%;
   height: auto;
   overflow: visible;
   cursor: pointer;
 }
-
-.exercise-island .cell { pointer-events: none; }
+.atlas-island .cell { pointer-events: none; }
 
 .row-action {
   display: grid;
@@ -578,6 +615,8 @@ button:active {
     <button class="add" id="addExercise" type="button" aria-label="Добавить упражнение">+</button>
     <button class="delete-mode" id="deleteMode" type="button" aria-label="Режим удаления" aria-pressed="false">×</button>
   </div>
+
+  <div id="trainingAtlas" aria-label="Атлас тренировок"></div>
 
 </section>
 
@@ -943,22 +982,15 @@ function getProgress(exercise) {
 function renderHome() {
 
   list.replaceChildren();
+  const atlas = document.getElementById("trainingAtlas");
+  atlas.replaceChildren();
 
   document.getElementById("exerciseCount").textContent =
     String(state.exercises.length).padStart(2,"0");
 
   state.exercises.forEach(exercise=>{
 
-    const row = document.createElement("div");
-    row.className = "exercise";
-
-    const name = document.createElement("button");
-    name.className = "exercise-name";
-    name.type = "button";
-
-    name.textContent = starText(exercise.name);
-
-    name.onclick = ()=>{
+    const openOrDelete = ()=>{
       if (deleteMode) {
         if (!confirm("Удалить упражнение?")) return;
         state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
@@ -969,25 +1001,45 @@ function renderHome() {
       openExercise(exercise.id);
     };
 
+    // Compact list at the top.
+    const row = document.createElement("div");
+    row.className = "exercise";
+
+    const name = document.createElement("button");
+    name.className = "exercise-name";
+    name.type = "button";
+    name.textContent = starText(exercise.name);
+    name.onclick = openOrDelete;
+
+    const percent = document.createElement("span");
+    percent.className = "exercise-percent";
+    percent.textContent = String((exercise.maps || []).reduce(
+      (total,map)=>total+map.cells.filter(cell=>cell[2]).length,0
+    ));
+    row.append(name,percent);
+    row.classList.toggle("is-delete-mode",deleteMode);
+    list.appendChild(row);
+
+    // Vertical island sheet below the list: one column per training.
+    const column = document.createElement("div");
+    column.className = "atlas-column";
+
+    const title = document.createElement("button");
+    title.className = "atlas-title";
+    title.type = "button";
+    title.textContent = starText(exercise.name);
+    title.onclick = openOrDelete;
+
     const islands = document.createElement("div");
-    islands.className = "exercise-islands";
+    islands.className = "atlas-islands";
 
     (exercise.maps || []).forEach(map=>{
       const preview = document.createElementNS("http://www.w3.org/2000/svg","svg");
       preview.setAttribute("viewBox","0 0 " + W + " " + H);
-      preview.setAttribute("class","exercise-island");
+      preview.setAttribute("class","atlas-island");
       preview.setAttribute("role","button");
       preview.setAttribute("aria-label",starText(exercise.name));
-      preview.addEventListener("click",()=>{
-        if (deleteMode) {
-          if (!confirm("Удалить упражнение?")) return;
-          state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
-          save();
-          renderHome();
-          return;
-        }
-        openExercise(exercise.id);
-      });
+      preview.addEventListener("click",openOrDelete);
 
       map.cells.forEach(cell=>{
         const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
@@ -1008,24 +1060,10 @@ function renderHome() {
       islands.appendChild(preview);
     });
 
-    name.onclick = ()=>{
-      if (deleteMode) {
-        if (!confirm("Удалить упражнение?")) return;
-        state.exercises = state.exercises.filter(e=>e.id!==exercise.id);
-        save();
-        renderHome();
-        return;
-      }
-      openExercise(exercise.id);
-    };
-
-    row.append(name,islands);
-    row.classList.toggle("is-delete-mode",deleteMode);
-    list.appendChild(row);
+    column.append(title,islands);
+    atlas.appendChild(column);
   });
 }
-
-
 /* РЕЖИМ УДАЛЕНИЯ */
 
 document.getElementById("deleteMode").onclick = ()=>{
