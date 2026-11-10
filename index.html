@@ -210,13 +210,14 @@ button {
 
 #trainingAtlas {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: stretch;
+  gap: 9px;
   width: calc(100% + 16px);
-  margin: 30px -8px 0;
-  padding: 0 8px 24px;
+  margin: 24px -8px 0;
+  padding: 16px 8px 26px;
   overflow-x: auto;
   overflow-y: hidden;
+  background: #55534f;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -228,7 +229,9 @@ button {
   flex-direction: column;
   align-items: stretch;
   min-width: 0;
-  gap: 8px;
+  gap: 10px;
+  padding: 11px 8px 15px;
+  background: #f0eee8;
 }
 .atlas-title {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
@@ -254,7 +257,16 @@ button {
   overflow: visible;
   cursor: pointer;
 }
-.atlas-island .cell { pointer-events: none; }
+.atlas-island .cell {
+  pointer-events: none;
+  fill: #d9d7d0;
+}
+.atlas-island .cell.filled {
+  fill: var(--cell);
+}
+.atlas-island .outline {
+  stroke: var(--cell);
+}
 
 .row-action {
   display: grid;
