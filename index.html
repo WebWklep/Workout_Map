@@ -178,13 +178,13 @@ button {
 
 .exercise-name {
   font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.08;
+  font-size: 15px;
+  line-height: .91;
   font-weight: 500;
-  letter-spacing: -.055em;
+  letter-spacing: -.075em;
   text-align: left;
   overflow-wrap: anywhere;
-  padding: 7px 0;
+  padding: 5px 0;
   color: var(--cell);
   text-transform: uppercase;
   text-shadow: none;
@@ -251,17 +251,36 @@ button {
   margin: 0 0 0 auto;
 }
 
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+}
 .add {
   display: block;
-  width: 48px;
-  height: 48px;
-  margin-top: 20px;
+  width: 40px;
+  height: 42px;
+  margin: 0;
   padding: 0;
   font-size: 27px;
   color: #65645e;
   text-align: left;
   position: relative;
   z-index: 5;
+}
+.delete-mode {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 36px;
+  padding: 0;
+  color: #aaa8a1;
+  font-size: 19px;
+  line-height: 1;
+}
+.delete-mode.is-active {
+  color: var(--cell);
 }
 
 /* КАРТА */
@@ -535,7 +554,10 @@ button:active {
 
   <div id="exerciseList"></div>
 
-  <button class="add" id="addExercise" type="button">+</button>
+  <div class="home-actions">
+    <button class="add" id="addExercise" type="button" aria-label="Добавить упражнение">+</button>
+    <button class="delete-mode" id="deleteMode" type="button" aria-label="Режим удаления" aria-pressed="false">×</button>
+  </div>
 
 </section>
 
@@ -582,6 +604,7 @@ const list = document.getElementById("exerciseList");
 const mapsEl = document.getElementById("maps");
 
 let currentId = null;
+let deleteMode = false;
 let audioContext = null;
 
 function playTone(frequency = 520, duration = 0.045, volume = 0.018) {
@@ -938,10 +961,22 @@ function renderHome() {
       renderHome();
     };
 
-    row.append(name,percent,del);
+    row.append(name,percent);
+    if (deleteMode) row.appendChild(del);
     list.appendChild(row);
   });
 }
+
+
+/* РЕЖИМ УДАЛЕНИЯ */
+
+document.getElementById("deleteMode").onclick = ()=>{
+  deleteMode = !deleteMode;
+  const button = document.getElementById("deleteMode");
+  button.classList.toggle("is-active",deleteMode);
+  button.setAttribute("aria-pressed",String(deleteMode));
+  renderHome();
+};
 
 
 /* ДОБАВЛЕНИЕ УПРАЖНЕНИЯ */
