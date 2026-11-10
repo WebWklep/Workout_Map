@@ -654,8 +654,22 @@ function randomIsland() {
   const horizontal = Math.cos(angle);
   const vertical = Math.sin(angle);
 
-  const centerX = 10.5;
-  const centerY = 13.5;
+  // Большинство островов намеренно выходят к одной из сторон карты.
+  // Иногда композиция остаётся центральной — это сохраняет разнообразие.
+  const edgeMode = Math.random() < .78;
+  const edgeAxis = Math.random() < .5 ? "x" : "y";
+  const edgeSign = Math.random() < .5 ? -1 : 1;
+
+  let centerX = 10.5;
+  let centerY = 13.5;
+
+  if (edgeMode && edgeAxis === "x") {
+    centerX = edgeSign < 0 ? 3.8 : 18.2;
+    centerY = rand(8,19);
+  } else if (edgeMode && edgeAxis === "y") {
+    centerY = edgeSign < 0 ? 4.8 : 22.2;
+    centerX = rand(6,16);
+  }
 
   // Создание отдельных массивов
 
@@ -665,6 +679,17 @@ function randomIsland() {
 
     let x = centerX + horizontal*t*11;
     let y = centerY + vertical*t*15;
+
+    // Первый массив закрепляет композицию у выбранного края.
+    if (i === 0 && edgeMode) {
+      if (edgeAxis === "x") {
+        x = centerX;
+        y = centerY;
+      } else {
+        x = centerX;
+        y = centerY;
+      }
+    }
 
     if (mode === 5) {
       x += rand(-5,5);
@@ -676,14 +701,15 @@ function randomIsland() {
       y += rand(-7,7);
     }
 
-    const rx = rand(3.5,7.5);
-    const ry = rand(3.5,8.5);
+    // Увеличиваем базовый масштаб: маленькие острова будут встречаться реже.
+    const rx = rand(5.2,8.4);
+    const ry = rand(5.4,9.2);
 
     blobs.push({
       x,
       y,
-      rx,
-      ry,
+      rx: (i === 0 && edgeMode) ? rand(7.2,9.0) : rx,
+      ry: (i === 0 && edgeMode) ? rand(6.8,9.4) : ry,
       rotation: rand(0,Math.PI*2),
       phase: rand(0,Math.PI*2),
       waves: rand(.08,.24),
